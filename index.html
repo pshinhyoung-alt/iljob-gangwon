@@ -350,6 +350,13 @@
       width: 100%; min-height: 196px; margin-top: 12px; padding: 14px; border: 1px solid #dde2ea; border-radius: 14px;
       font: inherit; font-size: .97rem; line-height: 1.6; background: #fbfcfe; resize: vertical; color: var(--ink);
     }
+    #mPhone {
+      width: 100%; padding: 14px; border: 1px solid #dde2ea; border-radius: 14px;
+      font: inherit; font-size: 1.05rem; font-weight: 600; background: #fbfcfe; color: var(--ink);
+    }
+    #mPhone:focus { outline: none; border-color: var(--blue); background: #fff; box-shadow: 0 0 0 4px rgba(47,107,255,.12); }
+    #mPhone.invalid { border-color: #e0465f; box-shadow: 0 0 0 4px rgba(224,70,95,.1); }
+    .mhint .err { color: #e0465f; }
     #mText:focus { outline: none; border-color: var(--blue); background: #fff; box-shadow: 0 0 0 4px rgba(47,107,255,.12); }
     .mbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
     .mbtns.one { grid-template-columns: 1fr; }
@@ -1021,6 +1028,8 @@
           <button type="button" data-tpl="seeker" aria-pressed="false">구직 문의</button>
           <button type="button" data-tpl="etc" aria-pressed="false">기타 문의</button>
         </div>
+        <label class="mlabel" for="mPhone">답변 받을 연락처 <em style="color:#e0465f;font-style:normal">*</em></label>
+        <input type="tel" id="mPhone" inputmode="tel" autocomplete="tel" maxlength="13" placeholder="010-0000-0000" />
         <label class="mlabel" for="mText" style="margin-bottom:0">보낼 내용 <span style="font-weight:500;color:var(--sub)">(빈칸을 채워 주세요)</span></label>
         <textarea id="mText" maxlength="600"></textarea>
 
@@ -1549,6 +1558,7 @@
     (function messageButtons() {
       const modal = document.getElementById('msgModal');
       const text = document.getElementById('mText');
+      const phone = document.getElementById('mPhone');
       const smsBtn = document.getElementById('smsBtn');
       const kakaoBtn = document.getElementById('kakaoBtn');
       const hint = document.getElementById('mHint');
@@ -1559,15 +1569,28 @@
 
       const TPL = {
         employer: '[인력 요청 - 홈페이지]\n업체명/성함: \n필요 분야: \n필요 인원: \n날짜·시간: \n작업 장소: \n작업 내용: ',
-        seeker:   '[구직 문의 - 홈페이지]\n성함: \n연락처: \n희망 분야: \n희망 지역: \n경력·자격증: ',
+        seeker:   '[구직 문의 - 홈페이지]\n성함: \n희망 분야: \n희망 지역: \n경력·자격증: ',
         etc:      '[문의 - 홈페이지]\n성함: \n문의 내용: '
       };
 
       if (!KAKAO_CHANNEL_URL) { kakaoBtn.remove(); document.getElementById('mBtns').classList.add('one'); }
 
+      const phoneOk = () => /^0\d{1,2}-?\d{3,4}-?\d{4}$/.test(phone.value.trim());
+      function message() {
+        // 입력한 연락처를 양식 두 번째 줄에 넣어 함께 보냄
+        const lines = text.value.trim().split('\n');
+        if (phone.value.trim()) lines.splice(1, 0, '연락처: ' + phone.value.trim());
+        return lines.join('\n');
+      }
+      function checkPhone() {
+        if (phoneOk()) { phone.classList.remove('invalid'); return true; }
+        phone.classList.add('invalid'); phone.focus();
+        hint.innerHTML = '<span class="err">' + (phone.value.trim() ? '연락처를 정확히 입력해 주세요. (예: 010-1234-5678)' : '답변 받을 연락처를 입력해 주세요.') + '</span>';
+        return false;
+      }
       function smsHref() {
         // iOS 와 안드로이드 모두 동작하는 형식: sms:번호?&body=내용
-        const body = encodeURIComponent(text.value.trim());
+        const body = encodeURIComponent(message());
         return 'sms:' + SMS_NUMBER + (isIOS ? '&' : '?') + 'body=' + body;
       }
       function renderQr() {
@@ -1575,7 +1598,7 @@
         try {
           qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
           const q = qrcode(0, 'L');
-          q.addData('SMSTO:' + SMS_NUMBER + ':' + text.value.trim(), 'Byte');
+          q.addData('SMSTO:' + SMS_NUMBER + ':' + message(), 'Byte');
           q.make();
           qrBox.innerHTML = q.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
         } catch (e) { qrBox.innerHTML = ''; }
@@ -1599,6 +1622,7 @@
         setTimeout(() => {
           // 첫 번째 빈칸(두 번째 줄 끝)에 커서를 두고 맨 위부터 보이게
           const v = text.value, i = v.indexOf('\n', v.indexOf('\n') + 1);
+          if (!phone.value.trim()) { phone.focus(); return; }
           text.focus(); const pos = i < 0 ? v.length : i;
           text.setSelectionRange(pos, pos); text.scrollTop = 0;
         }, 60);
@@ -1616,13 +1640,24 @@
       });
       modal.querySelectorAll('[data-tpl]').forEach(b => b.addEventListener('click', () => setTpl(b.dataset.tpl)));
       text.addEventListener('input', () => { edited = true; refresh(); });
+      phone.addEventListener('input', () => {
+        const d = phone.value.replace(/\D/g, '').slice(0, 11);
+        phone.value = d.startsWith('02')
+          ? d.replace(/^(02)(\d{0,4})(\d{0,4})$/, (m, a, b, c) => [a, b, c].filter(Boolean).join('-'))
+          : d.replace(/^(\d{3})(\d{0,4})(\d{0,4})$/, (m, a, b, c) => [a, b, c].filter(Boolean).join('-'));
+        if (phoneOk()) { phone.classList.remove('invalid'); if (hint.querySelector('.err')) hint.textContent = ''; }
+        refresh();
+      });
       smsBtn.addEventListener('click', e => {
+        if (!checkPhone()) { e.preventDefault(); return; }
+        smsBtn.href = smsHref();
         if (isDesktop()) { e.preventDefault(); hint.innerHTML = '<b>PC에서는 문자를 보낼 수 없습니다.</b> 아래 QR 코드를 휴대폰 카메라로 찍어 주세요.'; }
         else { edited = false; }
       });
       kakaoBtn.addEventListener('click', async () => {
+        if (!checkPhone()) return;
         // 카카오톡 채널은 미리 내용을 채울 수 없어 클립보드에 복사한 뒤 채팅창을 엽니다.
-        try { await navigator.clipboard.writeText(text.value.trim()); } catch (_) {}
+        try { await navigator.clipboard.writeText(message()); } catch (_) {}
         window.open(KAKAO_CHANNEL_URL, '_blank', 'noopener');
         hint.innerHTML = '<b>✔ 내용이 복사되었습니다.</b> 카카오톡 채팅창에 붙여넣기(길게 누르기 → 붙여넣기) 해 주세요.';
       });
