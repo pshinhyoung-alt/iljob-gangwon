@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>접수 관리 | 일잡코리아 강원본부</title>
+  <meta name="theme-color" content="#0a1330" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="config.js"></script>
+  <style>
+    :root {
+      --navy: #0a1330; --blue: #2f6bff; --amber: #ffb020; --ink: #0f172a; --sub: #5a6478;
+      --line: #e6e9f0; --bg: #f4f6fa; --white: #fff; --red: #e0465f; --green: #18a058;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Pretendard', -apple-system, 'Malgun Gothic', sans-serif; color: var(--ink); background: var(--bg); line-height: 1.5; word-break: keep-all; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+    input, select, textarea { font: inherit; color: var(--ink); }
+    [hidden] { display: none !important; }
+    .wrap { max-width: 1280px; margin: 0 auto; padding: 0 20px; }
+
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 16px; border-radius: 10px; font-weight: 700; font-size: .92rem; transition: background .15s, box-shadow .15s; white-space: nowrap; }
+    .btn svg { width: 16px; height: 16px; }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: #1f58e6; }
+    .btn-amber { background: var(--amber); color: var(--ink); }
+    .btn-light { background: #fff; border: 1px solid var(--line); }
+    .btn-light:hover { background: #f7f8fb; }
+    .btn-danger { background: #fff; color: var(--red); border: 1px solid #f3c6ce; }
+    .btn-danger:hover { background: #fff3f5; }
+    .btn[disabled] { opacity: .55; cursor: wait; }
+
+    .field-in { width: 100%; padding: 11px 12px; border: 1px solid #dde2ea; border-radius: 10px; background: #fbfcfe; font-size: .95rem; }
+    .field-in:focus { outline: none; border-color: var(--blue); background: #fff; box-shadow: 0 0 0 3px rgba(47,107,255,.12); }
+    textarea.field-in { min-height: 84px; resize: vertical; line-height: 1.55; }
+
+    /* ---------- 로그인 / 안내 ---------- */
+    .center { min-height: 100vh; display: grid; place-items: center; padding: 24px;
+      background: radial-gradient(80% 60% at 70% 0%, #1b3bb3 0%, var(--navy) 60%); }
+    .card-login { width: min(400px, 100%); background: #fff; border-radius: 22px; padding: 36px 30px; box-shadow: 0 30px 60px rgba(0,0,0,.3); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.15rem; }
+    .brand .mk { width: 36px; height: 36px; border-radius: 11px; background: linear-gradient(135deg, var(--blue), #5b8cff); color: #fff; display: grid; place-items: center; font-weight: 900; }
+    .brand small { font-weight: 600; color: var(--sub); font-size: .85rem; }
+    .card-login h1 { font-size: 1.5rem; font-weight: 800; margin: 22px 0 4px; letter-spacing: -0.03em; }
+    .card-login p.sub { color: var(--sub); font-size: .92rem; margin-bottom: 22px; }
+    .card-login label { display: block; font-weight: 700; font-size: .88rem; margin: 14px 0 6px; }
+    .card-login .btn { width: 100%; padding: 14px; margin-top: 22px; font-size: 1rem; }
+    .err { color: var(--red); font-size: .88rem; font-weight: 600; min-height: 1.3em; margin-top: 12px; }
+    .setup-list { margin: 14px 0 0 18px; color: var(--sub); font-size: .92rem; display: grid; gap: 6px; }
+
+    /* ---------- 상단바 ---------- */
+    .top { background: var(--navy); color: #fff; position: sticky; top: 0; z-index: 30; }
+    .top .wrap { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 12px; }
+    .top .brand small { color: rgba(255,255,255,.6); }
+    .top-right { display: flex; align-items: center; gap: 8px; font-size: .88rem; }
+    .top-right .who { color: rgba(255,255,255,.7); margin-right: 6px; }
+    .top-right .btn { background: rgba(255,255,255,.1); color: #fff; padding: 8px 12px; }
+    .top-right .btn:hover { background: rgba(255,255,255,.18); }
+
+    /* ---------- 요약 카드 ---------- */
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 22px 0 18px; }
+    .stat { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; text-align: left; transition: border-color .15s, box-shadow .15s; }
+    .stat:hover { border-color: #c9d3ea; }
+    .stat.on { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(47,107,255,.12); }
+    .stat .lb { font-size: .85rem; color: var(--sub); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .stat .lb i { width: 8px; height: 8px; border-radius: 50%; }
+    .stat b { display: block; font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-top: 2px; }
+
+    /* ---------- 도구 모음 ---------- */
+    .tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .tabs { display: inline-flex; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 4px; }
+    .tabs button { padding: 8px 14px; border-radius: 9px; font-weight: 700; font-size: .9rem; color: var(--sub); }
+    .tabs button.on { background: var(--ink); color: #fff; }
+    .tools select, .tools input[type=search] { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font-size: .92rem; }
+    .tools input[type=search] { flex: 1; min-width: 200px; }
+    .tools .sp { flex: 1; }
+
+    /* ---------- 목록 ---------- */
+    .list { background: #fff; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+    .row, .head {
+      display: grid; align-items: center; gap: 12px; width: 100%; text-align: left;
+      grid-template-columns: 92px 150px 72px 1.1fr 130px 1fr 1.1fr 1.2fr 64px;
+      padding: 13px 18px; border-bottom: 1px solid var(--line); font-size: .9rem;
+    }
+    .head { background: #f8f9fc; color: var(--sub); font-size: .8rem; font-weight: 700; }
+    .row:last-child { border-bottom: 0; }
+    .row:hover { background: #f7f9ff; }
+    .row.unread { background: #fffdf3; }
+    .row.unread .nm { font-weight: 800; }
+    .row .nm { font-weight: 600; display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .row .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--red); flex: none; }
+    .ell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .rno { font-size: .78rem; color: var(--sub); font-family: ui-monospace, Consolas, monospace; }
+    .time { font-size: .8rem; color: var(--sub); }
+    .pill { display: inline-flex; align-items: center; justify-content: center; padding: 4px 10px; border-radius: 999px; font-size: .78rem; font-weight: 800; white-space: nowrap; }
+    .s-신규 { background: #fff1c2; color: #8a6200; }
+    .s-연락완료 { background: #e3ecff; color: #1d4fd6; }
+    .s-매칭완료 { background: #dff5e7; color: #137a43; }
+    .s-보류 { background: #ffe6d5; color: #b24a00; }
+    .s-취소 { background: #eef0f3; color: #6b7280; }
+    .t-인력요청 { color: #b97800; font-weight: 800; font-size: .82rem; }
+    .t-구직 { color: var(--blue); font-weight: 800; font-size: .82rem; }
+    .t-기타문의 { color: var(--sub); font-weight: 800; font-size: .82rem; }
+    .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+    .chip { font-size: .72rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: #f0f2f7; color: #4b5563; white-space: nowrap; }
+    .cnt { font-weight: 800; color: var(--sub); }
+    .cnt.multi { color: var(--red); }
+    .empty { padding: 60px 20px; text-align: center; color: var(--sub); }
+    .foot-note { color: var(--sub); font-size: .82rem; margin: 12px 2px 40px; }
+
+    /* ---------- 상세 패널 ---------- */
+    .overlay { position: fixed; inset: 0; background: rgba(5,10,28,.45); z-index: 50; opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s; }
+    .overlay.open { opacity: 1; visibility: visible; }
+    .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100%); background: #fff; z-index: 60;
+      transform: translateX(100%); transition: transform .3s cubic-bezier(.2,.7,.2,1); display: flex; flex-direction: column; box-shadow: -20px 0 50px rgba(0,0,0,.18); }
+    .drawer.open { transform: none; }
+    .d-head { padding: 20px 22px 16px; border-bottom: 1px solid var(--line); }
+    .d-head .row1 { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .d-head h2 { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em; margin: 6px 0 8px; }
+    .x { width: 38px; height: 38px; border-radius: 50%; background: #f0f2f7; display: grid; place-items: center; }
+    .x svg { width: 18px; height: 18px; }
+    .d-body { flex: 1; overflow: auto; padding: 18px 22px 26px; }
+    .d-sec { margin-bottom: 22px; }
+    .d-sec h3 { font-size: .82rem; font-weight: 800; color: var(--sub); letter-spacing: .04em; margin-bottom: 10px; }
+    .status-set { display: flex; flex-wrap: wrap; gap: 6px; }
+    .status-set button { padding: 8px 12px; border-radius: 999px; font-weight: 700; font-size: .85rem; border: 1px solid var(--line); background: #fff; }
+    .status-set button.on { border-color: transparent; box-shadow: inset 0 0 0 2px currentColor; }
+    .status-set button.s-신규 { background: #fff1c2; color: #8a6200; }
+    .status-set button.s-연락완료 { background: #e3ecff; color: #1d4fd6; }
+    .status-set button.s-매칭완료 { background: #dff5e7; color: #137a43; }
+    .status-set button.s-보류 { background: #ffe6d5; color: #b24a00; }
+    .status-set button.s-취소 { background: #eef0f3; color: #6b7280; }
+    .quick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; }
+    .grid2 .full { grid-column: 1 / -1; }
+    .grid2 label { display: block; font-size: .8rem; font-weight: 700; color: var(--sub); margin-bottom: 4px; }
+    .log { background: #f7f8fb; border-radius: 12px; padding: 12px 14px; font-size: .85rem; color: #374151; white-space: pre-line; }
+    .meta { font-size: .82rem; color: var(--sub); display: grid; gap: 3px; }
+    .d-foot { padding: 14px 22px; border-top: 1px solid var(--line); display: flex; gap: 8px; justify-content: space-between; background: #fff; }
+    .d-foot .r { display: flex; gap: 8px; }
+
+    .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: #fff;
+      padding: 12px 18px; border-radius: 12px; font-weight: 700; font-size: .92rem; opacity: 0; transition: all .3s; z-index: 80; pointer-events: none; }
+    .toast.show { opacity: 1; transform: translateX(-50%); }
+
+    @media (max-width: 1100px) {
+      .head { display: none; }
+      .row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nm st" "ph tp" "fd fd" "tm cn"; gap: 4px 10px; padding: 14px 16px; }
+      .row > :nth-child(1) { grid-area: st; justify-self: end; }
+      .row > :nth-child(2) { grid-area: tm; }
+      .row > :nth-child(3) { grid-area: tp; justify-self: end; }
+      .row > :nth-child(4) { grid-area: nm; font-size: 1rem; }
+      .row > :nth-child(5) { grid-area: ph; }
+      .row > :nth-child(6) { grid-area: fd; color: var(--sub); }
+      .row > :nth-child(7), .row > :nth-child(8) { display: none; }
+      .row > :nth-child(9) { grid-area: cn; justify-self: end; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 640px) {
+      .wrap { padding: 0 14px; }
+      .top-right .who, .top .brand small { display: none; }
+      .tabs { width: 100%; }
+      .tabs button { flex: 1; padding: 8px 6px; }
+      .tools select { width: 100%; }
+      .tools input[type=search] { flex: 1 1 100%; min-width: 0; }
+      .tools .btn { padding: 10px 8px; }
+      .tools .sp { display: none; }
+      .tools .btn { flex: 1; }
+      .grid2 { grid-template-columns: 1fr; }
+      .stat b { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 연결 전 안내 -->
+  <section class="center" id="vSetup" hidden>
+    <div class="card-login">
+      <div class="brand"><span class="mk">일</span><span>일잡코리아 <small>강원본부</small></span></div>
+      <h1>데이터베이스 연결 전입니다</h1>
+      <p class="sub">관리자 페이지를 쓰려면 Supabase 연결 정보가 필요합니다.</p>
+      <ol class="setup-list">
+        <li>db/관리자페이지_설정_안내.txt 순서대로 Supabase 프로젝트를 만듭니다.</li>
+        <li>config.js 에 Project URL 과 anon 키를 넣습니다.</li>
+        <li>이 페이지를 새로고침합니다.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 로그인 -->
+  <section class="center" id="vLogin" hidden>
+    <form class="card-login" id="loginForm">
+      <div class="brand"><span class="mk">일</span><span>일잡코리아 <small>강원본부</small></span></div>
+      <h1>접수 관리 로그인</h1>
+      <p class="sub">관리자로 등록된 계정만 로그인할 수 있습니다.</p>
+      <label for="lEmail">이메일</label>
+      <input class="field-in" type="email" id="lEmail" autocomplete="username" required />
+      <label for="lPw">비밀번호</label>
+      <input class="field-in" type="password" id="lPw" autocomplete="current-password" required />
+      <button class="btn btn-primary" type="submit" id="lBtn">로그인</button>
+      <p class="err" id="lErr" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- 관리 화면 -->
+  <div id="vApp" hidden>
+    <header class="top">
+      <div class="wrap">
+        <div class="brand"><span class="mk">일</span><span>접수 관리 <small>일잡코리아 강원본부</small></span></div>
+        <div class="top-right">
+          <span class="who" id="who"></span>
+          <a class="btn" href="./" target="_blank" rel="noopener">홈페이지</a>
+          <button class="btn" id="logout">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="stats">
+        <button class="stat" data-quick="unread"><span class="lb"><i style="background:var(--red)"></i>확인 안 한 접수</span><b id="stUnread">0</b></button>
+        <button class="stat" data-quick="today"><span class="lb"><i style="background:var(--amber)"></i>오늘 들어온 접수</span><b id="stToday">0</b></button>
+        <button class="stat" data-quick="open"><span class="lb"><i style="background:var(--blue)"></i>처리 중 (신규·연락완료·보류)</span><b id="stOpen">0</b></button>
+        <button class="stat" data-quick="done"><span class="lb"><i style="background:var(--green)"></i>이번 달 매칭완료</span><b id="stDone">0</b></button>
+      </div>
+
+      <div class="tools">
+        <div class="tabs" id="typeTabs">
+          <button data-type="" class="on">전체</button>
+          <button data-type="인력요청">인력요청</button>
+          <button data-type="구직">구직</button>
+          <button data-type="기타문의">기타</button>
+        </div>
+        <select id="fStatus" aria-label="처리상태">
+          <option value="">모든 상태</option>
+          <option value="open">처리 중</option>
+          <option>신규</option><option>연락완료</option><option>매칭완료</option><option>보류</option><option>취소</option>
+        </select>
+        <input type="search" id="fSearch" placeholder="이름 · 연락처 · 지역 · 내용 검색" />
+        <span class="sp"></span>
+        <button class="btn btn-amber" id="btnNew">+ 직접 등록</button>
+        <button class="btn btn-light" id="btnCsv">엑셀 받기</button>
+        <button class="btn btn-light" id="btnReload" aria-label="새로고침">새로고침</button>
+      </div>
+
+      <div class="list" id="list">
+        <div class="head"><span>상태</span><span>최근 접수</span><span>구분</span><span>성함 / 업체명</span><span>연락처</span><span>분야</span><span>장소 · 지역</span><span>경로</span><span>횟수</span></div>
+        <div id="rows"></div>
+      </div>
+      <p class="foot-note" id="footNote"></p>
+    </main>
+  </div>
+
+  <!-- 상세 / 등록 패널 -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer" aria-modal="true" role="dialog" aria-labelledby="dTitle">
+    <div class="d-head">
+      <div class="row1">
+        <span class="rno" id="dNo"></span>
+        <button class="x" id="dClose" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <h2 id="dTitle"></h2>
+      <div class="chips" id="dChips"></div>
+    </div>
+    <div class="d-body">
+      <div class="d-sec" id="secType" hidden>
+        <h3>구분</h3>
+        <select class="field-in" id="eType"><option value="employer">인력요청</option><option value="seeker">구직</option><option value="etc">기타문의</option></select>
+      </div>
+      <div class="d-sec" id="secStatus">
+        <h3>처리 상태</h3>
+        <div class="status-set" id="statusSet"></div>
+        <div class="quick">
+          <a class="btn btn-primary" id="qCall" href="#">전화 걸기</a>
+          <a class="btn btn-light" id="qSms" href="#">문자 보내기</a>
+        </div>
+      </div>
+      <div class="d-sec">
+        <h3>관리</h3>
+        <div class="grid2">
+          <div><label for="eAssignee">담당자</label><input class="field-in" id="eAssignee" maxlength="30" /></div>
+          <div></div>
+          <div class="full"><label for="eMemo">메모 (직원용)</label><textarea class="field-in" id="eMemo" maxlength="3000" placeholder="통화 내용, 배정 인력, 단가 등"></textarea></div>
+        </div>
+      </div>
+      <div class="d-sec">
+        <h3>접수 내용</h3>
+        <div class="grid2">
+          <div><label for="e_name">성함 / 업체명</label><input class="field-in" id="e_name" /></div>
+          <div><label for="e_phone">연락처</label><input class="field-in" id="e_phone" inputmode="tel" /></div>
+          <div><label for="e_field">분야</label><input class="field-in" id="e_field" /></div>
+          <div><label for="e_headcount">인원</label><input class="field-in" id="e_headcount" /></div>
+          <div><label for="e_schedule">날짜 · 일정</label><input class="field-in" id="e_schedule" /></div>
+          <div><label for="e_period">근무기간</label><input class="field-in" id="e_period" /></div>
+          <div class="full"><label for="e_location">장소 · 지역</label><input class="field-in" id="e_location" /></div>
+          <div class="full"><label for="e_details">상세 내용</label><textarea class="field-in" id="e_details"></textarea></div>
+          <div><label for="e_nationality">내/외국인</label><input class="field-in" id="e_nationality" /></div>
+          <div><label for="e_age_group">연령대</label><input class="field-in" id="e_age_group" /></div>
+          <div><label for="e_work_type">근무형태</label><input class="field-in" id="e_work_type" /></div>
+          <div><label for="e_call_time">연락 가능 시간</label><input class="field-in" id="e_call_time" /></div>
+        </div>
+      </div>
+      <div class="d-sec" id="secLog">
+        <h3>자동 기록</h3>
+        <div class="log" id="dLog"></div>
+      </div>
+      <div class="d-sec" id="secMeta">
+        <div class="meta" id="dMeta"></div>
+      </div>
+    </div>
+    <div class="d-foot">
+      <button class="btn btn-danger" id="dDelete">삭제</button>
+      <div class="r">
+        <button class="btn btn-light" id="dCancel">닫기</button>
+        <button class="btn btn-primary" id="dSave">저장</button>
+      </div>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script>
+  (function () {
+    const CFG = window.ILJOB_CONFIG || {};
+    const $ = id => document.getElementById(id);
+    const STATUS = ['신규', '연락완료', '매칭완료', '보류', '취소'];
+    const OPEN = ['신규', '연락완료', '보류'];
+    const FIELDS = ['name', 'phone', 'field', 'headcount', 'schedule', 'period', 'location', 'details', 'nationality', 'age_group', 'work_type', 'call_time'];
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const kst = d => new Date(d).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false });
+    const ymd = d => new Date(d).toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' });   // YYYY-MM-DD
+    const show = v => ['vSetup', 'vLogin', 'vApp'].forEach(x => { $(x).hidden = x !== v; });
+    let toastTimer;
+    function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600); }
+
+    if (!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || !window.supabase) { show('vSetup'); return; }
+    const sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+
+    let all = [], filtered = [], current = null, mode = 'view', typeF = '', quickF = '', lastUnread = -1, pollTimer = null;
+
+    // ---------------- 로그인 ----------------
+    async function enter(session) {
+      if (!session) { show('vLogin'); return; }
+      const { data: ok, error } = await sb.rpc('is_admin');
+      if (error || !ok) {
+        await sb.auth.signOut();
+        show('vLogin'); $('lErr').textContent = '관리자로 등록되지 않은 계정입니다.';
+        return;
+      }
+      $('who').textContent = session.user.email;
+      show('vApp');
+      await load();
+      clearInterval(pollTimer);
+      pollTimer = setInterval(() => { if (!document.hidden && !$('drawer').classList.contains('open')) load(true); }, 60000);
+    }
+    $('loginForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      $('lErr').textContent = ''; $('lBtn').disabled = true;
+      const { data, error } = await sb.auth.signInWithPassword({ email: $('lEmail').value.trim(), password: $('lPw').value });
+      $('lBtn').disabled = false;
+      if (error) { $('lErr').textContent = '이메일 또는 비밀번호가 맞지 않습니다.'; return; }
+      enter(data.session);
+    });
+    $('logout').addEventListener('click', async () => { clearInterval(pollTimer); await sb.auth.signOut(); show('vLogin'); });
+    sb.auth.getSession().then(({ data }) => enter(data.session));
+
+    // ---------------- 불러오기 ----------------
+    async function load(silent) {
+      const { data, error } = await sb.from('inquiries').select('*').order('updated_at', { ascending: false }).limit(2000);
+      if (error) { toast('불러오기 실패: ' + error.message); return; }
+      all = data || [];
+      const unread = all.filter(r => !r.is_read).length;
+      if (silent && lastUnread >= 0 && unread > lastUnread) toast('새 접수 ' + (unread - lastUnread) + '건이 들어왔습니다');
+      lastUnread = unread;
+      document.title = (unread ? '(' + unread + ') ' : '') + '접수 관리 | 일잡코리아 강원본부';
+      stats(); render();
+    }
+
+    function stats() {
+      const today = ymd(new Date()), month = today.slice(0, 7);
+      $('stUnread').textContent = all.filter(r => !r.is_read).length;
+      $('stToday').textContent = all.filter(r => ymd(r.updated_at) === today).length;
+      $('stOpen').textContent = all.filter(r => OPEN.includes(r.status)).length;
+      $('stDone').textContent = all.filter(r => r.status === '매칭완료' && ymd(r.updated_at).slice(0, 7) === month).length;
+    }
+
+    function applyFilters() {
+      const st = $('fStatus').value, q = $('fSearch').value.trim().toLowerCase(), qd = q.replace(/\D/g, '');
+      const today = ymd(new Date()), month = today.slice(0, 7);
+      filtered = all.filter(r => {
+        if (typeF && r.type !== typeF) return false;
+        if (st === 'open' ? !OPEN.includes(r.status) : (st && r.status !== st)) return false;
+        if (quickF === 'unread' && r.is_read) return false;
+        if (quickF === 'today' && ymd(r.updated_at) !== today) return false;
+        if (quickF === 'open' && !OPEN.includes(r.status)) return false;
+        if (quickF === 'done' && !(r.status === '매칭완료' && ymd(r.updated_at).slice(0, 7) === month)) return false;
+        if (q) {
+          const hay = [r.receipt_no, r.name, r.phone, r.field, r.location, r.details, r.memo, r.assignee, r.schedule].join(' ').toLowerCase();
+          if (!hay.includes(q) && !(qd.length >= 3 && r.phone_digits.includes(qd))) return false;
+        }
+        return true;
+      });
+    }
+
+    function render() {
+      applyFilters();
+      $('rows').innerHTML = filtered.length ? filtered.map(r => `
+        <button class="row${r.is_read ? '' : ' unread'}" data-id="${r.id}">
+          <span><span class="pill s-${esc(r.status)}">${esc(r.status)}</span></span>
+          <span><span class="time">${esc(kst(r.updated_at))}</span><br><span class="rno">${esc(r.receipt_no)}</span></span>
+          <span class="t-${esc(r.type)}">${esc(r.type)}</span>
+          <span class="nm">${r.is_read ? '' : '<span class="dot" title="확인 안 함"></span>'}<span class="ell">${esc(r.name || '(이름 없음)')}</span></span>
+          <span>${esc(r.phone)}</span>
+          <span class="ell">${esc([r.field, r.headcount && r.headcount + '명', r.schedule].filter(Boolean).join(' · '))}</span>
+          <span class="ell">${esc(r.location || '')}</span>
+          <span class="chips">${(r.channels || []).map(c => `<span class="chip">${esc(c)}</span>`).join('')}</span>
+          <span class="cnt${r.submit_count > 1 ? ' multi' : ''}">${r.submit_count}회</span>
+        </button>`).join('') : '<div class="empty">조건에 맞는 접수가 없습니다.</div>';
+      $('footNote').textContent = `전체 ${all.length}건 중 ${filtered.length}건 표시 · 1분마다 자동 새로고침 · 같은 연락처의 처리 중 접수는 자동으로 한 줄에 합쳐집니다.`;
+    }
+
+    // ---------------- 필터 ----------------
+    $('typeTabs').addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      typeF = b.dataset.type;
+      $('typeTabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+      render();
+    });
+    document.querySelectorAll('[data-quick]').forEach(b => b.addEventListener('click', () => {
+      quickF = quickF === b.dataset.quick ? '' : b.dataset.quick;
+      document.querySelectorAll('[data-quick]').forEach(x => x.classList.toggle('on', x.dataset.quick === quickF));
+      render();
+    }));
+    $('fStatus').addEventListener('change', render);
+    $('fSearch').addEventListener('input', render);
+    $('btnReload').addEventListener('click', () => load().then(() => toast('새로고침했습니다')));
+    $('rows').addEventListener('click', e => {
+      const b = e.target.closest('.row'); if (!b) return;
+      openDetail(all.find(r => String(r.id) === b.dataset.id));
+    });
+
+    // ---------------- 상세 패널 ----------------
+    let pendingStatus = null;
+    function drawStatus() {
+      $('statusSet').innerHTML = STATUS.map(s => `<button type="button" data-s="${s}" class="${s === pendingStatus ? 'on s-' + s : ''}">${s}</button>`).join('');
+    }
+    $('statusSet').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; pendingStatus = b.dataset.s; drawStatus(); });
+
+    function openPanel() { $('overlay').classList.add('open'); $('drawer').classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closePanel() { $('overlay').classList.remove('open'); $('drawer').classList.remove('open'); document.body.style.overflow = ''; current = null; }
+    $('overlay').addEventListener('click', closePanel);
+    $('dClose').addEventListener('click', closePanel);
+    $('dCancel').addEventListener('click', closePanel);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('drawer').classList.contains('open')) closePanel(); });
+
+    async function openDetail(r) {
+      if (!r) return;
+      mode = 'view'; current = r; pendingStatus = r.status;
+      $('secType').hidden = true; $('secStatus').hidden = false; $('dDelete').hidden = false;
+      $('secLog').hidden = !r.auto_log; $('secMeta').hidden = false;
+      $('dNo').textContent = r.receipt_no;
+      $('dTitle').innerHTML = `<span class="t-${esc(r.type)}">${esc(r.type)}</span> · ${esc(r.name || '(이름 없음)')}`;
+      $('dChips').innerHTML = (r.channels || []).map(c => `<span class="chip">${esc(c)}</span>`).join('')
+        + `<span class="chip" style="${r.submit_count > 1 ? 'background:#ffe3e8;color:#c0263f' : ''}">접수 ${r.submit_count}회</span>`;
+      drawStatus();
+      const digits = (r.phone || '').replace(/\D/g, '');
+      $('qCall').href = 'tel:' + digits; $('qSms').href = 'sms:' + digits;
+      $('eAssignee').value = r.assignee || ''; $('eMemo').value = r.memo || '';
+      FIELDS.forEach(f => { $('e_' + f).value = r[f] || ''; });
+      $('dLog').textContent = r.auto_log || '';
+      $('dMeta').innerHTML = `최초 접수: ${esc(kst(r.created_at))}<br>최근 접수: ${esc(kst(r.updated_at))}<br>개인정보 수집·이용 동의: ${r.agreed ? '동의함' : '-'}`;
+      openPanel();
+      if (!r.is_read) {
+        const { error } = await sb.from('inquiries').update({ is_read: true }).eq('id', r.id);
+        if (!error) { r.is_read = true; lastUnread = Math.max(0, lastUnread - 1); stats(); render(); }
+      }
+    }
+
+    function openNew() {
+      mode = 'new'; current = null; pendingStatus = '신규';
+      $('secType').hidden = false; $('secStatus').hidden = false; $('dDelete').hidden = true; $('secLog').hidden = true; $('secMeta').hidden = true;
+      $('dNo').textContent = '새 접수 직접 등록';
+      $('dTitle').textContent = '전화 · 방문 문의 등록';
+      $('dChips').innerHTML = '<span class="chip">직접 입력</span>';
+      drawStatus();
+      $('qCall').removeAttribute('href'); $('qSms').removeAttribute('href');
+      $('eAssignee').value = ''; $('eMemo').value = '';
+      FIELDS.forEach(f => { $('e_' + f).value = ''; });
+      openPanel();
+      setTimeout(() => $('e_name').focus(), 300);
+    }
+    $('btnNew').addEventListener('click', openNew);
+
+    $('dSave').addEventListener('click', async () => {
+      const btn = $('dSave'); btn.disabled = true;
+      try {
+        const vals = {}; FIELDS.forEach(f => { vals[f] = $('e_' + f).value.trim() || null; });
+        if (!vals.phone || vals.phone.replace(/\D/g, '').length < 9) { toast('연락처를 정확히 입력해 주세요'); $('e_phone').focus(); return; }
+        if (mode === 'new') {
+          // 홈페이지와 같은 접수 함수 사용 → 같은 연락처의 처리 중 접수가 있으면 자동으로 합쳐짐
+          const p = { type: $('eType').value, channel: '직접 입력', agree: '동의', name: vals.name, phone: vals.phone, field: vals.field,
+            headcount: vals.headcount, schedule: vals.schedule, period: vals.period, location: vals.location, details: vals.details,
+            nationality: vals.nationality, ageGroup: vals.age_group, workType: vals.work_type, callTime: vals.call_time };
+          const { data, error } = await sb.rpc('submit_inquiry', { p });
+          if (error) throw error;
+          const extra = { assignee: $('eAssignee').value.trim() || null, is_read: true };
+          if ($('eMemo').value.trim()) extra.memo = $('eMemo').value.trim();
+          if (pendingStatus !== '신규') extra.status = pendingStatus;
+          await sb.from('inquiries').update(extra).eq('receipt_no', data.receipt_no);
+          toast(data.merged ? `기존 접수 ${data.receipt_no} 에 합쳤습니다` : `${data.receipt_no} 등록했습니다`);
+        } else {
+          const upd = Object.assign({}, vals, {
+            phone_digits: vals.phone.replace(/\D/g, ''), status: pendingStatus,
+            assignee: $('eAssignee').value.trim() || null, memo: $('eMemo').value.trim() || null
+          });
+          const { error } = await sb.from('inquiries').update(upd).eq('id', current.id);
+          if (error) throw error;
+          toast('저장했습니다');
+        }
+        closePanel(); await load();
+      } catch (err) {
+        toast('저장 실패: ' + (err.message || err));
+      } finally { btn.disabled = false; }
+    });
+
+    $('dDelete').addEventListener('click', async () => {
+      if (!current) return;
+      if (!confirm(`${current.receipt_no} (${current.name || '이름 없음'}) 접수를 삭제할까요?\n삭제하면 되돌릴 수 없습니다.`)) return;
+      const { error } = await sb.from('inquiries').delete().eq('id', current.id);
+      if (error) { toast('삭제 실패: ' + error.message); return; }
+      toast('삭제했습니다'); closePanel(); load();
+    });
+
+    // ---------------- 엑셀(CSV) ----------------
+    $('btnCsv').addEventListener('click', () => {
+      const cols = [['접수번호', 'receipt_no'], ['최초접수', 'created_at'], ['최근접수', 'updated_at'], ['접수횟수', 'submit_count'], ['구분', 'type'],
+        ['접수경로', 'channels'], ['처리상태', 'status'], ['담당자', 'assignee'], ['메모', 'memo'], ['성함/업체명', 'name'], ['연락처', 'phone'],
+        ['분야', 'field'], ['인원', 'headcount'], ['날짜·일정', 'schedule'], ['근무기간', 'period'], ['장소·지역', 'location'], ['상세내용', 'details'],
+        ['내/외국인', 'nationality'], ['연령대', 'age_group'], ['근무형태', 'work_type'], ['연락가능시간', 'call_time'], ['자동기록', 'auto_log']];
+      const cell = (r, k) => {
+        let v = r[k];
+        if (k === 'created_at' || k === 'updated_at') v = new Date(v).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', hour12: false });
+        if (Array.isArray(v)) v = v.join(' + ');
+        v = v == null ? '' : String(v);
+        if (/^[=+\-@]/.test(v)) v = "'" + v;
+        return '"' + v.replace(/"/g, '""') + '"';
+      };
+      const csv = '﻿' + [cols.map(c => c[0]).join(',')].concat(filtered.map(r => cols.map(c => cell(r, c[1])).join(','))).join('\r\n');
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      a.download = '접수목록_' + ymd(new Date()).replace(/-/g, '') + '.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      toast(filtered.length + '건을 엑셀 파일로 받았습니다');
+    });
+  })();
+  </script>
+</body>
+</html>
