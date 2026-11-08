@@ -357,6 +357,10 @@
     #mPhone:focus { outline: none; border-color: var(--blue); background: #fff; box-shadow: 0 0 0 4px rgba(47,107,255,.12); }
     #mPhone.invalid { border-color: #e0465f; box-shadow: 0 0 0 4px rgba(224,70,95,.1); }
     .mhint .err { color: #e0465f; }
+    .magree { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; font-size: .88rem; font-weight: 700; cursor: pointer; }
+    .magree input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--blue); flex: none; }
+    .magree small { display: block; font-weight: 500; color: var(--sub); font-size: .8rem; margin-top: 2px; }
+    .magree.invalid span { color: #e0465f; }
     #mText:focus { outline: none; border-color: var(--blue); background: #fff; box-shadow: 0 0 0 4px rgba(47,107,255,.12); }
     .mbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
     .mbtns.one { grid-template-columns: 1fr; }
@@ -1032,6 +1036,8 @@
         <input type="tel" id="mPhone" inputmode="tel" autocomplete="tel" maxlength="13" placeholder="010-0000-0000" />
         <label class="mlabel" for="mText" style="margin-bottom:0">보낼 내용 <span style="font-weight:500;color:var(--sub)">(빈칸을 채워 주세요)</span></label>
         <textarea id="mText" maxlength="600"></textarea>
+        <label class="magree"><input type="checkbox" id="mAgree" />
+          <span>상담 기록을 위한 개인정보 수집·이용에 동의합니다. (필수)<small>연락처와 입력하신 내용을 상담 목적으로 저장하며, 상담 완료 후 1년 뒤 파기합니다.</small></span></label>
 
         <div class="mbtns" id="mBtns">
           <a class="btn btn-sms" id="smsBtn" href="sms:01084943848" data-direct>문자 보내기</a>
@@ -1398,6 +1404,21 @@
        ========================================================= */
     const FORM_ENDPOINT = "";
 
+    // 모든 접수(양식·문자·카톡)를 같은 항목 이름으로 통일해 한 시트에 저장
+    const FIELD_MAP = { company: 'name', startDate: 'schedule', fields: 'field', area: 'location', experience: 'details' };
+    function recordBody(type, channel, rec) {
+      const b = new URLSearchParams();
+      b.append('type', type); b.append('channel', channel);
+      Object.entries(rec).forEach(([k, v]) => { if (v) b.append(k, v); });
+      return b;
+    }
+    // 문자 앱으로 화면이 넘어가도 전송되도록 sendBeacon 사용
+    function sendRecordBeacon(body) {
+      if (!FORM_ENDPOINT) return false;
+      try { if (navigator.sendBeacon && navigator.sendBeacon(FORM_ENDPOINT, body)) return true; } catch (_) {}
+      try { fetch(FORM_ENDPOINT, { method: 'POST', mode: 'no-cors', body, keepalive: true }); return true; } catch (_) { return false; }
+    }
+
     (function onlineForms() {
       const modal = document.getElementById('formModal');
       const panes = modal.querySelectorAll('[data-pane]');
@@ -1468,14 +1489,14 @@
             msgEl.textContent = '온라인 접수 연결 준비 중입니다. 전화(033-731-5282)로 문의해 주세요.';
             return;
           }
-          const body = new URLSearchParams();
-          body.append('type', form.dataset.type);
+          const rec = {};
           for (const [k, v] of new FormData(form).entries()) {
             if (k === 'fields' || k === 'website') continue;
-            body.append(k, String(v).trim());
+            rec[FIELD_MAP[k] || k] = String(v).trim();
           }
           const checked = [...form.querySelectorAll('[name=fields]:checked')].map(c => c.value);
-          if (checked.length) body.append('fields', checked.join(', '));
+          if (checked.length) rec.field = checked.join(', ');
+          const body = recordBody(form.dataset.type, '홈페이지 양식', rec);
 
           const btn = form.querySelector('.fsubmit'); const label = btn.textContent;
           btn.disabled = true; btn.textContent = '접수 중입니다…'; msgEl.textContent = '';
@@ -1565,7 +1586,41 @@
       const qrBox = document.getElementById('smsQr');
       const isDesktop = () => window.matchMedia('(hover: hover) and (pointer: fine)').matches;
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      let lastFocus = null, edited = false;
+      let lastFocus = null, edited = false, currentTpl = 'employer', lastSent = '';
+      const agree = document.getElementById('mAgree');
+      const TYPE_OF = { employer: 'employer', seeker: 'seeker', etc: 'etc' };
+      // 양식의 '항목: 내용' 줄을 시트의 칸으로 나눔
+      const LABELS = {
+        '업체명/성함': 'name', '성함': 'name', '필요 분야': 'field', '희망 분야': 'field', '필요 인원': 'headcount',
+        '날짜·시간': 'schedule', '작업 장소': 'location', '희망 지역': 'location',
+        '작업 내용': 'details', '경력·자격증': 'details', '문의 내용': 'details'
+      };
+      function parseRecord() {
+        const rec = {}, extra = [];
+        text.value.split('\n').forEach(line => {
+          const t = line.trim(); if (!t || /^\[.*\]$/.test(t)) return;
+          const m = t.match(/^([^:：]+)[:：]\s*(.*)$/);
+          const key = m && LABELS[m[1].trim()];
+          if (key) { if (m[2].trim()) rec[key] = rec[key] ? rec[key] + ' / ' + m[2].trim() : m[2].trim(); }
+          else extra.push(t);
+        });
+        if (extra.length) rec.details = [rec.details, ...extra].filter(Boolean).join('\n');
+        rec.phone = phone.value.trim(); rec.agree = '동의';
+        return rec;
+      }
+      function record(channel) {
+        if (!FORM_ENDPOINT) return;
+        const key = currentTpl + '|' + channel + '|' + message();
+        if (key === lastSent) return;            // 같은 내용을 여러 번 눌러도 한 번만 기록
+        lastSent = key;
+        sendRecordBeacon(recordBody(TYPE_OF[currentTpl], channel, parseRecord()));
+      }
+      function checkAgree() {
+        if (agree.checked) { agree.closest('.magree').classList.remove('invalid'); return true; }
+        agree.closest('.magree').classList.add('invalid'); agree.focus();
+        hint.innerHTML = '<span class="err">개인정보 수집·이용에 동의해 주세요.</span>';
+        return false;
+      }
 
       const TPL = {
         employer: '[인력 요청 - 홈페이지]\n업체명/성함: \n필요 분야: \n필요 인원: \n날짜·시간: \n작업 장소: \n작업 내용: ',
@@ -1606,7 +1661,7 @@
       function refresh() { smsBtn.href = smsHref(); renderQr(); }
       function setTpl(key) {
         modal.querySelectorAll('[data-tpl]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tpl === key)));
-        text.value = TPL[key]; edited = false; refresh();
+        currentTpl = key; text.value = TPL[key]; edited = false; refresh();
       }
 
       function open(trigger) {
@@ -1640,6 +1695,7 @@
       });
       modal.querySelectorAll('[data-tpl]').forEach(b => b.addEventListener('click', () => setTpl(b.dataset.tpl)));
       text.addEventListener('input', () => { edited = true; refresh(); });
+      agree.addEventListener('change', () => { if (agree.checked) { agree.closest('.magree').classList.remove('invalid'); if (hint.querySelector('.err')) hint.textContent = ''; } });
       phone.addEventListener('input', () => {
         const d = phone.value.replace(/\D/g, '').slice(0, 11);
         phone.value = d.startsWith('02')
@@ -1649,13 +1705,15 @@
         refresh();
       });
       smsBtn.addEventListener('click', e => {
-        if (!checkPhone()) { e.preventDefault(); return; }
+        if (!checkPhone() || !checkAgree()) { e.preventDefault(); return; }
         smsBtn.href = smsHref();
+        record(isDesktop() ? '문자(PC·QR)' : '문자');
         if (isDesktop()) { e.preventDefault(); hint.innerHTML = '<b>PC에서는 문자를 보낼 수 없습니다.</b> 아래 QR 코드를 휴대폰 카메라로 찍어 주세요.'; }
         else { edited = false; }
       });
       kakaoBtn.addEventListener('click', async () => {
-        if (!checkPhone()) return;
+        if (!checkPhone() || !checkAgree()) return;
+        record('카카오톡');
         // 카카오톡 채널은 미리 내용을 채울 수 없어 클립보드에 복사한 뒤 채팅창을 엽니다.
         try { await navigator.clipboard.writeText(message()); } catch (_) {}
         window.open(KAKAO_CHANNEL_URL, '_blank', 'noopener');
