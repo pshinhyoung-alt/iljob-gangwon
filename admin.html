@@ -6,6 +6,12 @@
   <meta name="robots" content="noindex, nofollow" />
   <title>접수 관리 | 일잡코리아 강원본부</title>
   <meta name="theme-color" content="#0a1330" />
+  <link rel="manifest" href="admin.webmanifest" />
+  <link rel="icon" type="image/png" href="icons/admin-192.png" />
+  <link rel="apple-touch-icon" href="icons/admin-apple-180.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="일잡 관리" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
@@ -212,6 +218,7 @@
         <div class="brand"><span class="mk">일</span><span>접수 관리 <small>일잡코리아 강원본부</small></span></div>
         <div class="top-right">
           <span class="who" id="who"></span>
+          <button class="btn" id="btnInstall" hidden>📱 앱 설치</button>
           <a class="btn" href="./" target="_blank" rel="noopener">홈페이지</a>
           <button class="btn" id="logout">로그아웃</button>
         </div>
@@ -322,6 +329,25 @@
   <div class="toast" id="toast" role="status"></div>
 
   <script>
+  // 관리자 앱(PWA) 설치
+  (function () {
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    if (standalone) return;
+    const btn = document.getElementById('btnInstall');
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    let deferred = null;
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; btn.hidden = false; });
+    window.addEventListener('appinstalled', () => { btn.hidden = true; });
+    if (isIOS) btn.hidden = false;
+    btn.addEventListener('click', async () => {
+      if (deferred) { deferred.prompt(); await deferred.userChoice.catch(() => null); deferred = null; btn.hidden = true; return; }
+      alert('아이폰 설치 방법\n\n1. 사파리(Safari)로 이 페이지를 엽니다.\n2. 아래쪽 공유 버튼(네모에 위쪽 화살표)을 누릅니다.\n3. "홈 화면에 추가" → "추가"를 누릅니다.\n\n홈 화면의 "일잡 관리" 아이콘으로 바로 열 수 있습니다.');
+    });
+  })();
+
   (function () {
     const CFG = window.ILJOB_CONFIG || {};
     const $ = id => document.getElementById(id);
