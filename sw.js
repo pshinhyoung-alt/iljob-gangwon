@@ -3,7 +3,7 @@
    - 사진·아이콘: 한 번 받은 것은 저장해 두고 빠르게 보여줌
    - 영상·데이터베이스(Supabase)·외부 글꼴: 저장하지 않고 그대로 통과
    홈페이지를 고친 뒤 사진을 같은 이름으로 바꿨다면 아래 VERSION 날짜를 바꿔 주세요. */
-const VERSION = 'iljob-2026-11-09g';
+const VERSION = 'iljob-2026-11-09h';
 const CORE = [
   './', './index.html', './admin.html', './privacy.html', './gallery.html', './config.js',
   './manifest.webmanifest', './admin.webmanifest',

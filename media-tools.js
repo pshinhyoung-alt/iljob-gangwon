@@ -281,86 +281,225 @@
   /* ---------- 배경 음악 ----------
      브라우저 안에서 직접 작곡해서 만드는 음악이라 저작권 걱정이 없습니다.
      opt: 'bright' | 'warm' | 'power' | 'piano' | 'none' | File(직접 고른 음악 파일) */
+  // 음악 종류 (group: 고르는 목록의 묶음)
+  //  keys: 반주 악기 piano|pluck|bell|ep|guitar   pattern: 마디 안 분산화음 순서(화음음 번호)
+  //  pad: strings|saw|none   bass: long|half|bounce|pulse|walk   drums: pop|drive|shaker|ballad|cinema|swing|folk|null
+  //  melody: 멜로디 악기 (lead|piano|bell) · from: 몇 번째 마디부터
+  const R1 = [[0, 1.5], [1.5, 0.5], [2, 2]], R2 = [[0, 1], [1, 1], [2, 1.5], [3.5, 0.5]], R3 = [[0, 3], [3, 1]], R4 = [[0, 2], [2, 1], [3, 1]], R5 = [[0, 4]];
   const MUSIC_STYLES = {
-    bright: { name: '밝고 경쾌하게', bpm: 112, key: 60, prog: ['I', 'V', 'vi', 'IV'], drums: 'pop', bass: 'bounce', arp: [0, 1, 2, 1, 3, 2, 1, 2], arpVol: 0.13, padVol: 0.05 },
-    warm:   { name: '따뜻하고 잔잔하게', bpm: 78, key: 65, prog: ['I', 'iii', 'IV', 'V'], drums: 'shaker', bass: 'long', arp: [0, 2, 1, 2], arpVol: 0.12, padVol: 0.06 },
-    power:  { name: '힘차게 (현장 작업)', bpm: 124, key: 57, prog: ['vi', 'IV', 'I', 'V'], drums: 'drive', bass: 'pulse', arp: [0, 2, 3, 2, 0, 2, 3, 1], arpVol: 0.1, padVol: 0.06 },
-    piano:  { name: '피아노처럼 차분하게', bpm: 70, key: 62, prog: ['I', 'vi', 'IV', 'V'], drums: null, bass: 'long', arp: [0, 1, 2, 3, 2, 1], arpVol: 0.16, padVol: 0.035 }
+    ballad:   { group: '발라드·감성', name: '감성 발라드', bpm: 68, key: 63, prog: ['I', 'V', 'vi', 'iii', 'IV', 'I', 'IV', 'V'],
+                keys: 'piano', pattern: [0, 2, 1, 2, 3, 2, 1, 2], keysVol: 0.1, pad: 'strings', padVol: 0.03, bass: 'long', drums: 'ballad', drumsFrom: 4,
+                melody: { voice: 'lead', vol: 0.085, from: 2, rhythm: [R1, R4, R2, R3] }, reverb: 0.4 },
+    ballad2:  { group: '발라드·감성', name: '새벽 피아노 발라드', bpm: 62, key: 60, prog: ['vi', 'IV', 'I', 'V', 'vi', 'IV', 'ii', 'V'],
+                keys: 'piano', pattern: [0, 1, 2, 3, 2, 1], keysVol: 0.11, pad: 'strings', padVol: 0.022, bass: 'long', drums: null,
+                melody: { voice: 'piano', vol: 0.13, from: 1, rhythm: [R4, R1, R3, R5] }, reverb: 0.5 },
+    hope:     { group: '발라드·감성', name: '희망찬 감동 (다큐)', bpm: 80, key: 62, prog: ['IV', 'V', 'iii', 'vi', 'ii', 'V', 'I', 'I'],
+                keys: 'piano', pattern: [0, 1, 2, 1, 0, 1, 2, 1], keysVol: 0.09, pad: 'strings', padVol: 0.045, bass: 'half', drums: 'cinema', drumsFrom: 4,
+                melody: { voice: 'lead', vol: 0.08, from: 4, rhythm: [R3, R1, R5, R4] }, reverb: 0.45 },
+    warm:     { group: '잔잔하게', name: '따뜻하고 잔잔하게', bpm: 78, key: 65, prog: ['I', 'iii', 'IV', 'V'], keys: 'pluck', pattern: [0, 2, 1, 2],
+                keysVol: 0.12, pad: 'saw', padVol: 0.05, bass: 'long', drums: 'shaker', reverb: 0.25 },
+    piano:    { group: '잔잔하게', name: '피아노처럼 차분하게', bpm: 70, key: 62, prog: ['I', 'vi', 'IV', 'V'], keys: 'piano', pattern: [0, 1, 2, 3, 2, 1],
+                keysVol: 0.12, pad: 'strings', padVol: 0.02, bass: 'long', drums: null, reverb: 0.4 },
+    musicbox: { group: '잔잔하게', name: '오르골 (포근하게)', bpm: 76, key: 67, prog: ['I', 'IV', 'I', 'V', 'vi', 'IV', 'V', 'I'], keys: 'bell', pattern: [0, 1, 2, 3, 2, 1],
+                keysVol: 0.14, pad: 'saw', padVol: 0.025, bass: null, drums: null, melody: { voice: 'bell', vol: 0.15, from: 2, rhythm: [R4, R2, R3, R5] }, reverb: 0.45 },
+    cafe:     { group: '잔잔하게', name: '카페 재즈', bpm: 92, key: 65, prog: ['ii7', 'V7', 'Imaj7', 'vi7'], keys: 'ep', pattern: null, keysVol: 0.085,
+                pad: 'none', padVol: 0, bass: 'walk', drums: 'swing', drumsFrom: 1, melody: { voice: 'ep', vol: 0.1, from: 2, rhythm: [R2, R4, R1, R3] }, reverb: 0.25 },
+    bright:   { group: '밝고 경쾌하게', name: '밝고 경쾌하게', bpm: 112, key: 60, prog: ['I', 'V', 'vi', 'IV'], keys: 'pluck', pattern: [0, 1, 2, 1, 3, 2, 1, 2],
+                keysVol: 0.13, pad: 'saw', padVol: 0.05, bass: 'bounce', drums: 'pop', reverb: 0.15 },
+    acoustic: { group: '밝고 경쾌하게', name: '어쿠스틱 기타', bpm: 96, key: 67, prog: ['I', 'V', 'vi', 'IV'], keys: 'guitar', pattern: null, keysVol: 0.07,
+                pad: 'none', padVol: 0, bass: 'half', drums: 'folk', melody: { voice: 'lead', vol: 0.06, from: 4, rhythm: [R4, R2, R1, R3] }, reverb: 0.2 },
+    power:    { group: '힘차게', name: '힘차게 (현장 작업)', bpm: 124, key: 57, prog: ['vi', 'IV', 'I', 'V'], keys: 'pluck', pattern: [0, 2, 3, 2, 0, 2, 3, 1],
+                keysVol: 0.1, pad: 'saw', padVol: 0.06, bass: 'pulse', drums: 'drive', reverb: 0.12 }
   };
-  const CHORDS = { I: [0, 4, 7], ii: [2, 5, 9], iii: [4, 7, 11], IV: [5, 9, 12], V: [7, 11, 14], vi: [9, 12, 16] };
-  const CAT_MUSIC = { care: 'warm', repair: 'bright', construction: 'power', cleaning: 'bright', waste: 'power', farm: 'warm' };
+  const CHORDS = { I: [0, 4, 7], ii: [2, 5, 9], iii: [4, 7, 11], IV: [5, 9, 12], V: [7, 11, 14], vi: [9, 12, 16],
+                   Imaj7: [0, 4, 7, 11], ii7: [2, 5, 9, 12], iii7: [4, 7, 11, 14], IVmaj7: [5, 9, 12, 16], V7: [7, 11, 14, 17], vi7: [9, 12, 16, 19] };
+  const SCALE = [0, 2, 4, 5, 7, 9, 11];
+  const CAT_MUSIC = { care: 'ballad', repair: 'bright', construction: 'power', cleaning: 'acoustic', waste: 'power', farm: 'hope' };
   const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+  function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 
-  function composeInto(oc, out, st, seconds) {
+  // 멜로디 만들기: 강박은 화음음, 약박은 음계를 따라 한두 칸씩 움직임 (마디 묶음마다 반복)
+  function makeMelody(st, seedName) {
+    const rand = rng([...seedName].reduce((a, c) => a * 31 + c.charCodeAt(0), 7));
+    const lo = st.key + 12, hi = st.key + 24;
+    const scaleNotes = []; for (let m = lo - 2; m <= hi + 2; m++) if (SCALE.includes(((m - st.key) % 12 + 12) % 12)) scaleNotes.push(m);
+    const nearest = (cands, prev) => cands.reduce((b, x) => Math.abs(x - prev) < Math.abs(b - prev) ? x : b);
+    const N = st.prog.length * (st.prog.length >= 8 ? 1 : 2);
+    let prev = st.key + 16;
+    const bars = [];
+    for (let b = 0; b < N; b++) {
+      const ch = CHORDS[st.prog[b % st.prog.length]];
+      const chordTones = [];
+      for (let o = 0; o <= 24; o += 12) ch.forEach(c => { const m = st.key + c + o; if (m >= lo - 2 && m <= hi + 2) chordTones.push(m); });
+      const rhythm = st.melody.rhythm[b % st.melody.rhythm.length];
+      const end = b % 4 === 3;
+      bars.push(rhythm.map(([at, len], i) => {
+        let n;
+        if (at === 0 || at === 2 || (end && i === rhythm.length - 1)) {
+          const pool = chordTones.filter(x => Math.abs(x - prev) <= 7);
+          n = end && i === rhythm.length - 1 ? nearest(chordTones.filter(x => ((x - st.key - ch[0]) % 12 + 12) % 12 === 0), prev) : nearest(pool.length ? pool : chordTones, prev + (rand() < 0.5 ? -2 : 2));
+        } else {
+          const k = scaleNotes.indexOf(nearest(scaleNotes, prev));
+          const step = rand() < 0.65 ? 1 : 2;
+          const dir = prev > hi - 3 ? -1 : prev < lo + 3 ? 1 : (rand() < 0.5 ? -1 : 1);
+          n = scaleNotes[Math.max(0, Math.min(scaleNotes.length - 1, k + dir * step))];
+        }
+        prev = n;
+        return [at, len, n];
+      }));
+    }
+    return bars;
+  }
+
+  function composeInto(oc, out, st, seconds, styleName) {
     const beat = 60 / st.bpm, bar = beat * 4;
     const noise = oc.createBuffer(1, oc.sampleRate, oc.sampleRate);
     const nd = noise.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
 
+    // 울림(리버브): 소리가 공간에 퍼지는 느낌
+    const verb = oc.createConvolver();
+    const ir = oc.createBuffer(2, Math.floor(oc.sampleRate * 1.8), oc.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 3); }
+    verb.buffer = ir;
+    const verbIn = oc.createGain(); verbIn.gain.value = st.reverb || 0.2;
+    verbIn.connect(verb).connect(out);
+    const mus = oc.createGain(); mus.connect(out); mus.connect(verbIn);       // 악기 → 원음 + 울림
+
     const env = (g, t, a, peak, d) => { g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.exponentialRampToValueAtTime(0.0001, t + a + d); };
-    function tone(type, f, t, a, peak, d, dest = out, detune = 0) {
+    function tone(type, f, t, a, peak, d, dest = mus, detune = 0) {
       const o = oc.createOscillator(), g = oc.createGain();
       o.type = type; o.frequency.value = f; o.detune.value = detune;
       env(g, t, a, peak, d); o.connect(g).connect(dest); o.start(t); o.stop(t + a + d + 0.05);
     }
-    // 부드러운 배경 화음
-    const padBus = oc.createBiquadFilter(); padBus.type = 'lowpass'; padBus.frequency.value = 1400; padBus.connect(out);
+    // ----- 악기 -----
+    const pianoBus = oc.createBiquadFilter(); pianoBus.type = 'lowpass'; pianoBus.frequency.value = 3200; pianoBus.connect(mus);
+    function piano(t, n, vol, len = 2) {
+      const d = Math.min(3.2, Math.max(0.9, len * 1.3)) * (n > 84 ? 0.6 : 1);
+      [[1, 1], [2, 0.42], [3, 0.17], [4, 0.07]].forEach(([r, a]) => tone('sine', hz(n) * r, t, 0.004, vol * a, d / (1 + (r - 1) * 0.5), pianoBus));
+    }
+    function pluck(t, n, vol) { tone('triangle', hz(n), t, 0.005, vol, st.bpm < 90 ? 1.2 : 0.45); tone('sine', hz(n + 12), t, 0.005, vol * 0.35, 0.3); }
+    function bell(t, n, vol) { tone('sine', hz(n), t, 0.003, vol, 1.6); tone('sine', hz(n) * 2.76, t, 0.003, vol * 0.25, 0.6); tone('sine', hz(n) * 5.4, t, 0.003, vol * 0.08, 0.25); }
+    function ep(t, n, vol, len = 1) { tone('sine', hz(n), t, 0.006, vol, Math.max(0.6, len * 1.1)); tone('sine', hz(n) * 2, t, 0.004, vol * 0.22, 0.5); tone('triangle', hz(n) * 4, t, 0.002, vol * 0.05, 0.15); }
+    function lead(t, n, vol, len) {
+      const o = oc.createOscillator(), o2 = oc.createOscillator(), g = oc.createGain(), lfo = oc.createOscillator(), lg = oc.createGain(), f = oc.createBiquadFilter();
+      o.type = 'triangle'; o2.type = 'sine'; o.frequency.value = hz(n); o2.frequency.value = hz(n);
+      lfo.frequency.value = 5.2; lg.gain.value = 9; lfo.connect(lg); lg.connect(o.detune); lg.connect(o2.detune);
+      f.type = 'lowpass'; f.frequency.value = 2600;
+      const L = Math.max(0.25, len - 0.05);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 0.07); g.gain.setValueAtTime(vol * 0.85, t + L * 0.6);
+      g.gain.linearRampToValueAtTime(0.0001, t + L + 0.25);
+      o.connect(f); o2.connect(f); f.connect(g).connect(mus);
+      [o, o2, lfo].forEach(x => { x.start(t); x.stop(t + L + 0.3); });
+    }
+    const guitarBus = oc.createBiquadFilter(); guitarBus.type = 'lowpass'; guitarBus.frequency.value = 2400; guitarBus.connect(mus);
+    function strum(t, notes, down, vol) {
+      const ns = down ? notes : notes.slice().reverse();
+      ns.forEach((n, i) => { const tt = t + i * 0.014; tone('sawtooth', hz(n), tt, 0.003, vol * 0.5, 0.7, guitarBus); tone('triangle', hz(n), tt, 0.003, vol, 0.9, guitarBus); });
+    }
+    const voice = (name, t, n, vol, len) => name === 'piano' ? piano(t, n, vol, len) : name === 'bell' ? bell(t, n, vol) : name === 'ep' ? ep(t, n, vol, len) : name === 'lead' ? lead(t, n, vol, len) : pluck(t, n, vol);
+
+    const padBus = oc.createBiquadFilter(); padBus.type = 'lowpass'; padBus.frequency.value = st.pad === 'strings' ? 1900 : 1400; padBus.connect(mus);
     function pad(t, len, notes) {
-      notes.forEach(n => [-7, 7].forEach(dt => {
+      const att = st.pad === 'strings' ? Math.min(1.2, len * 0.35) : Math.min(0.6, len * 0.3);
+      notes.forEach(n => (st.pad === 'strings' ? [-11, 0, 11] : [-7, 7]).forEach(dt => {
         const o = oc.createOscillator(), g = oc.createGain();
         o.type = 'sawtooth'; o.frequency.value = hz(n); o.detune.value = dt;
-        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(st.padVol, t + Math.min(0.6, len * 0.3));
-        g.gain.setValueAtTime(st.padVol, t + len - 0.3); g.gain.linearRampToValueAtTime(0.0001, t + len + 0.25);
-        o.connect(g).connect(padBus); o.start(t); o.stop(t + len + 0.3);
+        g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(st.padVol, t + att);
+        g.gain.setValueAtTime(st.padVol, t + len - 0.3); g.gain.linearRampToValueAtTime(0.0001, t + len + 0.5);
+        o.connect(g).connect(padBus); o.start(t); o.stop(t + len + 0.55);
       }));
     }
-    // 피아노·기타 같은 짧은 소리
-    function pluck(t, n, vol) {
-      tone('triangle', hz(n), t, 0.005, vol, st.bpm < 90 ? 1.2 : 0.45);
-      tone('sine', hz(n + 12), t, 0.005, vol * 0.35, 0.3);
-    }
-    function bass(t, n, len, vol = 0.32) { tone('sine', hz(n), t, 0.01, vol, len); tone('triangle', hz(n), t, 0.01, vol * 0.25, len * 0.6); }
+    function bass(t, n, len, vol = 0.3) { tone('sine', hz(n), t, 0.01, vol, len, out); tone('triangle', hz(n), t, 0.01, vol * 0.22, len * 0.6, out); }
     function kick(t, vol = 0.8) {
       const o = oc.createOscillator(), g = oc.createGain();
       o.frequency.setValueAtTime(130, t); o.frequency.exponentialRampToValueAtTime(42, t + 0.14);
       env(g, t, 0.002, vol, 0.28); o.connect(g).connect(out); o.start(t); o.stop(t + 0.35);
     }
-    function noiseHit(t, type, freq, vol, d) {
+    function tom(t, vol = 0.5) {
+      const o = oc.createOscillator(), g = oc.createGain();
+      o.frequency.setValueAtTime(110, t); o.frequency.exponentialRampToValueAtTime(62, t + 0.3);
+      env(g, t, 0.003, vol, 0.5); o.connect(g).connect(mus); o.start(t); o.stop(t + 0.6);
+    }
+    function noiseHit(t, type, freq, vol, d, dest = out) {
       const s = oc.createBufferSource(), f = oc.createBiquadFilter(), g = oc.createGain();
       s.buffer = noise; f.type = type; f.frequency.value = freq;
-      env(g, t, 0.002, vol, d); s.connect(f).connect(g).connect(out);
+      env(g, t, 0.002, vol, d); s.connect(f).connect(g).connect(dest);
       s.start(t, Math.random() * 0.5); s.stop(t + d + 0.05);
     }
     const hat = (t, v = 0.06) => noiseHit(t, 'highpass', 7500, v, 0.05);
-    const clap = (t, v = 0.22) => noiseHit(t, 'bandpass', 1600, v, 0.16);
+    const clap = (t, v = 0.22) => noiseHit(t, 'bandpass', 1600, v, 0.16, mus);
     const shaker = (t, v = 0.045) => noiseHit(t, 'highpass', 5000, v, 0.09);
+    const rim = (t, v = 0.1) => noiseHit(t, 'bandpass', 2600, v, 0.05, mus);
+    const ride = (t, v = 0.04) => noiseHit(t, 'highpass', 6500, v, 0.28);
+    const crash = (t, v = 0.07) => noiseHit(t, 'highpass', 4500, v, 1.6, mus);
 
+    const melody = st.melody ? makeMelody(st, styleName || 'x') : null;
     const bars = Math.ceil(seconds / bar) + 1;
-    for (let b = 0; b < bars; b++) {
+    const dFrom = st.drumsFrom == null ? 1 : st.drumsFrom;
+    // 한 마디씩 만들기 (필요할 때 만들어서 긴 음악도 빠르게)
+    function scheduleBar(b) {
       const t0 = b * bar;
       const ch = CHORDS[st.prog[b % st.prog.length]].map(x => x + st.key);
-      const intro = b === 0;                       // 첫 마디는 가볍게 시작
-      pad(t0, bar, ch);
+      const nextCh = CHORDS[st.prog[(b + 1) % st.prog.length]].map(x => x + st.key);
+      if (st.pad !== 'none') pad(t0, bar, ch.slice(0, 3));
       // 베이스
-      const root = ch[0] - (ch[0] - st.key > 7 ? 24 : 12);   // 한 옥타브(또는 두 옥타브) 아래
-      if (st.bass === 'long') { bass(t0, root, bar * 0.9); }
-      else if (st.bass === 'bounce') { [0, 1.5, 2, 3.5].forEach(x => bass(t0 + x * beat, root, beat * 0.9)); }
-      else { for (let i = 0; i < 8; i++) bass(t0 + i * beat / 2, root, beat * 0.4, 0.26); }
-      // 분산 화음 (멜로디 역할)
-      const tones = [ch[0] + 12, ch[1] + 12, ch[2] + 12, ch[0] + 24];
-      const step = bar / st.arp.length;
-      st.arp.forEach((k, i) => { if (!(intro && i % 2)) pluck(t0 + i * step, tones[k], st.arpVol * (i === 0 ? 1.15 : 1)); });
+      const root = ch[0] - (ch[0] - st.key > 7 ? 24 : 12);
+      if (st.bass === 'long') bass(t0, root, bar * 0.9);
+      else if (st.bass === 'half') { bass(t0, root, beat * 1.8); bass(t0 + 2 * beat, ch[2] - 24 + (ch[2] - 24 < root ? 12 : 0), beat * 1.8, 0.24); }
+      else if (st.bass === 'bounce') [0, 1.5, 2, 3.5].forEach(x => bass(t0 + x * beat, root, beat * 0.9));
+      else if (st.bass === 'pulse') for (let i = 0; i < 8; i++) bass(t0 + i * beat / 2, root, beat * 0.4, 0.26);
+      else if (st.bass === 'walk') {
+        const nroot = nextCh[0] - (nextCh[0] - st.key > 7 ? 24 : 12);
+        [root, ch[1] - 12 - (ch[1] - 12 - root > 9 ? 12 : 0), ch[2] - 12 - (ch[2] - 12 - root > 11 ? 12 : 0), nroot + (nroot > root ? -1 : 1)]
+          .forEach((n, i) => bass(t0 + i * beat, n, beat * 0.85, 0.27));
+      }
+      // 반주
+      const tones = [ch[0] + 12, ch[1] + 12, ch[2] + 12, (ch[3] != null ? ch[3] : ch[0] + 12) + 12];
+      if (st.keys === 'guitar') {
+        const voicing = [ch[0], ch[1], ch[2], ch[0] + 12, ch[1] + 12, ch[2] + 12];
+        [[0, 1], [1, 1], [1.5, 0], [2.5, 0], [3, 1], [3.5, 0]].forEach(([x, d]) => strum(t0 + x * beat, d ? voicing : voicing.slice(2), d, st.keysVol * (d ? 1 : 0.7)));
+      } else if (st.keys === 'ep') {
+        // 재즈 피아노: 엇박으로 화음 누르기
+        [[0, 1.4], [1.66, 0.6], [2.66, 1.2]].forEach(([x, l]) => ch.forEach(n => ep(t0 + x * beat, n, st.keysVol, l * beat)));
+      } else {
+        const step = bar / st.pattern.length;
+        st.pattern.forEach((k, i) => voice(st.keys, t0 + i * step, tones[k], st.keysVol * (i === 0 ? 1.15 : 1), step * 2));
+        if (st.keys === 'piano') piano(t0, ch[0], st.keysVol * 0.8, bar);   // 왼손 낮은 음
+      }
+      // 멜로디
+      if (melody && b >= st.melody.from) {
+        melody[(b - st.melody.from) % melody.length].forEach(([at, len, n]) => voice(st.melody.voice, t0 + at * beat, n, st.melody.vol, len * beat));
+      }
       // 리듬
-      if (!intro && st.drums === 'pop') {
+      if (b < dFrom) return;
+      if (st.drums === 'pop') {
         [0, 2].forEach(x => kick(t0 + x * beat, 0.7)); [1, 3].forEach(x => clap(t0 + x * beat));
         for (let i = 0; i < 8; i++) hat(t0 + i * beat / 2, i % 2 ? 0.04 : 0.06);
-      } else if (!intro && st.drums === 'drive') {
+      } else if (st.drums === 'drive') {
         for (let i = 0; i < 4; i++) kick(t0 + i * beat, 0.8);
         [1, 3].forEach(x => clap(t0 + x * beat, 0.25));
         for (let i = 0; i < 8; i++) hat(t0 + i * beat / 2 + beat / 4, 0.06);
       } else if (st.drums === 'shaker') {
         for (let i = 0; i < 8; i++) shaker(t0 + i * beat / 2, i % 2 ? 0.03 : 0.045);
+      } else if (st.drums === 'ballad') {
+        if (b === dFrom) crash(t0, 0.05);
+        kick(t0, 0.5); kick(t0 + 2.5 * beat, 0.35); [1, 3].forEach(x => rim(t0 + x * beat, 0.09));
+        for (let i = 0; i < 8; i++) hat(t0 + i * beat / 2, 0.022);
+      } else if (st.drums === 'cinema') {
+        if ((b - dFrom) % 4 === 0) crash(t0, 0.07);
+        kick(t0, 0.6); kick(t0 + 2 * beat, 0.45); clap(t0 + 3 * beat, 0.12);
+        if ((b - dFrom) % 4 === 3) [2.5, 3, 3.5].forEach((x, i) => tom(t0 + x * beat, 0.35 + i * 0.1));
+        for (let i = 0; i < 4; i++) shaker(t0 + i * beat + beat / 2, 0.03);
+      } else if (st.drums === 'swing') {
+        [0, 1, 1.66, 2, 3, 3.66].forEach(x => ride(t0 + x * beat, x % 1 ? 0.025 : 0.04));
+        [1, 3].forEach(x => noiseHit(t0 + x * beat, 'bandpass', 1800, 0.05, 0.12, mus));
+        kick(t0, 0.3);
+      } else if (st.drums === 'folk') {
+        kick(t0, 0.5); kick(t0 + 2 * beat, 0.45); [1, 3].forEach(x => rim(t0 + x * beat, 0.11));
+        for (let i = 0; i < 8; i++) shaker(t0 + i * beat / 2, i % 2 ? 0.025 : 0.04);
       }
     }
+    return { bars, bar, scheduleBar };
   }
 
   // 원하는 길이의 음악(AudioBuffer)을 만들고 앞뒤를 자연스럽게 줄임
@@ -390,7 +529,14 @@
       s.connect(g).connect(master); s.start(0);
     } else {
       const st = MUSIC_STYLES[opt] || MUSIC_STYLES.bright;
-      composeInto(oc, master, st, seconds);
+      const song = composeInto(oc, master, st, seconds, MUSIC_STYLES[opt] ? opt : 'bright');
+      const q = 128 / SR;
+      for (let b = 0; b < song.bars; b++) {
+        const at = Math.floor((b * song.bar - 1) / q) * q;            // 1초 전에 다음 마디 준비
+        if (at <= 0 || typeof oc.suspend !== 'function') { song.scheduleBar(b); continue; }
+        if (at >= seconds - q) break;
+        oc.suspend(at).then(() => { song.scheduleBar(b); oc.resume(); });
+      }
     }
     return await oc.startRendering();
   }

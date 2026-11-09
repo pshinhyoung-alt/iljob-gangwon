@@ -158,14 +158,17 @@ ${musicPicker('S')}
   // 배경 음악 고르기 (짧은 영상 V / 홍보영상 S 공용)
   const musicFiles = { V: null, S: null };
   let musicPlay = null;
+  // 음악 목록: media-tools.js 의 MUSIC_STYLES 를 묶음(group)별로
+  function musicOptions() {
+    const groups = {};
+    Object.entries(MediaTools.MUSIC_STYLES).forEach(([k, v]) => { (groups[v.group] = groups[v.group] || []).push(`<option value="${k}">${esc(v.name)}</option>`); });
+    return Object.entries(groups).map(([g, opts]) => `<optgroup label="${esc(g)}">${opts.join('')}</optgroup>`).join('');
+  }
   const musicPicker = sfx => `
           <div class="g-music">
             <label>🎵 배경 음악<select class="field-in" id="gMusic${sfx}">
               <option value="auto" selected>자동 (분야에 맞게)</option>
-              <option value="bright">밝고 경쾌하게</option>
-              <option value="warm">따뜻하고 잔잔하게</option>
-              <option value="power">힘차게 (현장 작업)</option>
-              <option value="piano">피아노처럼 차분하게</option>
+              ${musicOptions()}
               <option value="none">음악 없음</option>
               <option value="file">내 음악 파일 고르기…</option>
             </select></label>
