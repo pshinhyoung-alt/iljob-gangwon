@@ -10,6 +10,6 @@
    ※ service_role 키는 절대 여기에 넣지 마세요.
    ========================================================= */
 window.ILJOB_CONFIG = {
-  SUPABASE_URL: "",
-  SUPABASE_ANON_KEY: ""
+  SUPABASE_URL: "https://ekvwkcojptfkfhidgwpj.supabase.co",
+  SUPABASE_ANON_KEY: "sb_publishable_iGrHm1cgW48enfiKoYZaPA_3QRlomh-"
 };
