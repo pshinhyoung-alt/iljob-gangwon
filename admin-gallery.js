@@ -107,6 +107,7 @@ ${musicPicker('S')}
           <p class="g-tip">시작 화면(상호) → 사진마다 천천히 확대 → 끝 화면(전화번호)으로 자동 구성되고, 배경 음악이 함께 들어갑니다. 만드는 동안 화면을 켜 두세요.</p>
         </div>
 
+        <p class="g-tip">📁 <b>분야 · 작업 날짜 · 지역 · 한 줄 설명</b>이 같으면 갤러리에서 <b>한 현장 묶음</b>으로 보입니다. 같은 현장의 홍보영상·작업 전후도 똑같이 적어 주세요.</p>
         <label class="g-check"><input type="checkbox" id="gPub" checked /> 홈페이지 갤러리에 바로 공개</label>
         <div class="g-prog" id="gProg" hidden><div class="g-bar"><i id="gProgBar"></i></div><span id="gProgTxt"></span></div>
         <button class="btn btn-primary g-submit" id="gSubmit">올리기</button>

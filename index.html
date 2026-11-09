@@ -493,6 +493,7 @@
       background: linear-gradient(0deg, rgba(10,19,48,.85), rgba(10,19,48,0)); }
     .recent-grid .rc small { display: block; font-weight: 500; opacity: .75; font-size: .78rem; }
     .recent-grid .rk { position: absolute; left: 10px; top: 10px; background: rgba(10,19,48,.7); color: #fff; font-size: .72rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
+    .recent-grid .rn { position: absolute; right: 10px; top: 10px; background: rgba(10,19,48,.7); color: #fff; font-size: .72rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
     .recent-more { text-align: center; margin-top: 26px; }
     .sheet-cta .btns { display: flex; gap: 8px; flex-wrap: wrap; }
     @media (max-width: 680px) { .recent-grid { grid-template-columns: 1fr 1fr; gap: 10px; } .recent-grid a { border-radius: 14px; } }
@@ -1964,16 +1965,23 @@
       const base = DB.SUPABASE_URL.replace(/\/$/, '');
       const fileUrl = p => base + '/storage/v1/object/public/gallery/' + p.split('/').map(encodeURIComponent).join('/');
       const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-      fetch(base + '/rest/v1/gallery_items?select=*&published=eq.true&order=taken_on.desc,id.desc&limit=6',
+      fetch(base + '/rest/v1/gallery_items?select=*&published=eq.true&order=taken_on.desc,id.desc&limit=300',
         { headers: { apikey: DB.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + DB.SUPABASE_ANON_KEY } })
         .then(r => r.ok ? r.json() : [])
         .then(list => {
           if (!list || !list.length) return;
-          document.getElementById('recentGrid').innerHTML = list.map(it => {
+          // 같은 분야·날짜·지역·설명 = 한 현장으로 묶어서 최근 6개 현장만
+          const map = new Map();
+          list.forEach(it => { const k = [it.category, it.taken_on || '', (it.location || '').trim(), (it.caption || '').trim()].join('|'); if (!map.has(k)) map.set(k, []); map.get(k).push(it); });
+          const groups = [...map.values()].slice(0, 6).map(L => {
+            const photos = L.filter(x => x.kind === 'photo').sort((a, b) => a.id - b.id);
+            return Object.assign({}, photos[0] || L[L.length - 1], { _n: L.length, _gid: Math.min(...L.map(x => x.id)) });
+          });
+          document.getElementById('recentGrid').innerHTML = groups.map(it => {
             const img = it.kind === 'youtube' ? 'https://i.ytimg.com/vi/' + encodeURIComponent(it.youtube_id) + '/hqdefault.jpg' : fileUrl(it.thumb_path || it.media_path);
             const kind = it.kind === 'beforeafter' ? '작업 전·후' : (it.kind === 'video' || it.kind === 'youtube') ? '▶ 영상' : CATS[it.category];
-            return `<a href="gallery.html?cat=${it.category}"><img src="${esc(img)}" alt="${esc(it.caption || '현장 사진')}" loading="lazy" />
-              <span class="rk">${esc(kind)}</span><span class="rc">${esc(it.caption || '현장 작업')}<small>${esc([it.taken_on, it.location].filter(Boolean).join(' · '))}</small></span></a>`;
+            return `<a href="gallery.html?cat=${it.category}&g=${it._gid}"><img src="${esc(img)}" alt="${esc(it.caption || '현장 사진')}" loading="lazy" />
+              <span class="rk">${esc(kind)}</span>${it._n > 1 ? '<span class="rn">📷 ' + it._n + '</span>' : ''}<span class="rc">${esc(it.caption || '현장 작업')}<small>${esc([it.taken_on, it.location].filter(Boolean).join(' · '))}</small></span></a>`;
           }).join('');
           document.getElementById('recent').hidden = false;
         }).catch(() => {});

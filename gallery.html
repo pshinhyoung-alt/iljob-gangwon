@@ -59,6 +59,15 @@
     .card .cat { font-size: .78rem; font-weight: 800; color: var(--blue); }
     .card .cap { font-weight: 700; margin: 2px 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .card .meta { font-size: .82rem; color: var(--sub); }
+    .card .meta b { color: var(--ink); font-weight: 700; }
+    /* 여러 장이 묶인 현장: 사진이 겹쳐 쌓인 모양 + 장수 표시 */
+    .card.album { overflow: visible; position: relative; }
+    .card.album::before, .card.album::after { content: ''; position: absolute; left: 10px; right: 10px; top: -8px; height: 24px; border-radius: 18px 18px 0 0; background: #e9edf5; border: 1px solid #d5dbe7; border-bottom: 0; z-index: -1; }
+    .card.album::after { left: 22px; right: 22px; top: -15px; background: #dde3ee; z-index: -2; }
+    .card.album .ph { border-radius: 18px 18px 0 0; }
+    .grid { padding-top: 16px; isolation: isolate; row-gap: 26px; }
+    .cnt { position: absolute; right: 10px; bottom: 10px; display: flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; background: rgba(10,19,48,.75); color: #fff; font-size: .82rem; font-weight: 800; backdrop-filter: blur(4px); }
+    .cnt svg { width: 15px; height: 15px; }
     .more { display: block; margin: 26px auto 0; padding: 13px 28px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-weight: 700; }
     .empty { text-align: center; padding: 70px 20px; background: #fff; border: 1px dashed #cfd6e4; border-radius: 20px; color: var(--sub); }
     .empty b { display: block; font-size: 1.15rem; color: var(--ink); margin-bottom: 6px; }
@@ -71,7 +80,7 @@
     .cta .a2 { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); }
 
     /* 크게 보기 */
-    .lb { position: fixed; inset: 0; z-index: 100; background: rgba(5,8,20,.94); display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s; }
+    .lb { position: fixed; inset: 0; z-index: 100; background: rgba(5,8,20,.97); display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s; }
     .lb.open { opacity: 1; visibility: visible; }
     .lb-top { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; color: #fff; gap: 12px; }
     .lb-top .t { font-size: .9rem; color: rgba(255,255,255,.7); }
@@ -86,6 +95,11 @@
     .lb-cap { color: #fff; padding: 14px 20px 22px; text-align: center; }
     .lb-cap b { display: block; font-size: 1.05rem; }
     .lb-cap span { color: rgba(255,255,255,.6); font-size: .88rem; }
+    .lb-strip { display: flex; gap: 8px; overflow-x: auto; padding: 0 18px 18px; justify-content: safe center; scrollbar-width: thin; }
+    .lb-strip button { position: relative; flex: none; width: 64px; height: 64px; border-radius: 10px; overflow: hidden; opacity: .45; border: 2px solid transparent; transition: opacity .2s; }
+    .lb-strip button.on { opacity: 1; border-color: var(--amber); }
+    .lb-strip img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .lb-strip i { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-style: normal; font-size: .9rem; background: rgba(0,0,0,.3); }
     /* 작업 전/후 비교 */
     .ba { position: relative; max-width: 100%; max-height: 100%; user-select: none; touch-action: none; border-radius: 10px; overflow: hidden; }
     .ba img { display: block; max-height: calc(100vh - 200px); max-width: 100%; }
@@ -103,6 +117,8 @@
       .card { border-radius: 14px; }
       .card .tx { padding: 10px 12px 12px; }
       .card .cap { font-size: .9rem; }
+      .card.album::before, .card.album::after { border-radius: 14px 14px 0 0; }
+      .lb-strip button { width: 52px; height: 52px; }
       .lb-stage { padding: 0 6px; }
       .nav { width: 40px; height: 40px; background: rgba(10,19,48,.5); }
     }
@@ -149,6 +165,7 @@
     <button class="nav p" id="lbP" aria-label="이전"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
     <button class="nav n" id="lbN" aria-label="다음"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
     <div class="lb-cap" id="lbCap"></div>
+    <div class="lb-strip" id="lbStrip" hidden></div>
   </div>
 
   <script>
@@ -164,22 +181,52 @@
     const thumbOf = it => it.kind === 'youtube' ? 'https://i.ytimg.com/vi/' + encodeURIComponent(it.youtube_id) + '/hqdefault.jpg' : fileUrl(it.thumb_path || it.media_path);
     const dateTxt = d => d ? d.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1.$2.$3') : '';
 
-    let items = [], counts = {}, cat = new URLSearchParams(location.search).get('cat') || '', shown = PAGE, idx = -1;
+    const qs = new URLSearchParams(location.search);
+    let groups = [], counts = {}, cat = qs.get('cat') || '', shown = PAGE, cur = null, idx = -1;
     if (cat && !CATS[cat]) cat = '';
+
+    // 같은 분야 · 같은 날짜 · 같은 지역 · 같은 설명으로 올린 사진·영상 = 한 현장(묶음)
+    const KIND_ORDER = { video: 0, youtube: 1, beforeafter: 2, photo: 3 };
+    function makeGroups(items) {
+      const map = new Map();
+      items.forEach(it => {
+        const k = [it.category, it.taken_on || '', (it.location || '').trim(), (it.caption || '').trim()].join('|');
+        if (!map.has(k)) map.set(k, []);
+        map.get(k).push(it);
+      });
+      return [...map.values()].map(L => {
+        L.sort((a, b) => (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]) || (a.id - b.id));   // 영상 먼저, 사진은 올린 순서대로
+        const photos = L.filter(x => x.kind === 'photo');
+        const first = L.reduce((m, x) => x.id < m.id ? x : m, L[0]);
+        return {
+          id: first.id, items: L, category: first.category, caption: first.caption, location: first.location, taken_on: first.taken_on,
+          cover: photos.length ? photos.reduce((m, x) => x.id < m.id ? x : m) : L[0],
+          last: Math.max(...L.map(x => x.id)),
+          nPhoto: L.filter(x => x.kind === 'photo' || x.kind === 'beforeafter').length,
+          nVideo: L.filter(x => x.kind === 'video' || x.kind === 'youtube').length,
+          hasBA: L.some(x => x.kind === 'beforeafter')
+        };
+      }).sort((a, b) => (b.taken_on || '').localeCompare(a.taken_on || '') || b.last - a.last);
+    }
 
     async function load() {
       if (!BASE || !KEY) { $('empty').hidden = false; return; }
+      let items = [];
       try {
-        const res = await fetch(BASE + '/rest/v1/gallery_items?select=*&published=eq.true&order=taken_on.desc,id.desc&limit=500',
+        const res = await fetch(BASE + '/rest/v1/gallery_items?select=*&published=eq.true&order=taken_on.desc,id.desc&limit=1000',
           { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } });
         items = res.ok ? await res.json() : [];
       } catch (_) { items = []; }
-      counts = items.reduce((m, it) => (m[it.category] = (m[it.category] || 0) + 1, m), {});
+      groups = makeGroups(items);
+      counts = groups.reduce((m, g) => (m[g.category] = (m[g.category] || 0) + 1, m), {});
       tabs(); render();
+      // 홈페이지 "최근 현장"에서 누른 현장 바로 열기
+      const gid = +qs.get('g');
+      if (gid) { const g = groups.find(x => x.id === gid || x.items.some(it => it.id === gid)); if (g) open(g, 0); }
     }
 
     function tabs() {
-      const list = [['', '전체', items.length]].concat(Object.entries(CATS).map(([k, v]) => [k, v, counts[k] || 0]));
+      const list = [['', '전체', groups.length]].concat(Object.entries(CATS).map(([k, v]) => [k, v, counts[k] || 0]));
       $('tabs').innerHTML = list.map(([k, v, n]) => `<button role="tab" data-c="${k}" class="${k === cat ? 'on' : ''}" aria-selected="${k === cat}">${esc(v)}<small>${n}</small></button>`).join('');
     }
     $('tabs').addEventListener('click', e => {
@@ -188,61 +235,77 @@
       history.replaceState(null, '', cat ? '?cat=' + cat : location.pathname);
     });
 
-    const list = () => items.filter(it => !cat || it.category === cat);
+    const list = () => groups.filter(g => !cat || g.category === cat);
+    const PLAY = '<span class="play"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></span>';
     function render() {
       const L = list();
       $('empty').hidden = L.length > 0;
-      $('grid').innerHTML = L.slice(0, shown).map((it, i) => `
-        <button class="card" data-i="${i}">
+      $('grid').innerHTML = L.slice(0, shown).map((g, i) => {
+        const n = g.items.length, onlyVideo = g.nPhoto === 0;
+        const parts = [g.nPhoto ? '사진 ' + g.nPhoto : '', g.nVideo ? '영상 ' + g.nVideo : ''].filter(Boolean).join(' · ');
+        return `
+        <button class="card${n > 1 ? ' album' : ''}" data-i="${i}">
           <div class="ph">
-            <img src="${esc(thumbOf(it))}" alt="${esc(it.caption || CATS[it.category])}" loading="lazy" />
-            ${it.kind === 'beforeafter' ? '<span class="badge ba">작업 전 · 후</span>' : ''}
-            ${it.kind === 'video' || it.kind === 'youtube' ? '<span class="badge">영상</span><span class="play"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></span>' : ''}
+            <img src="${esc(thumbOf(g.cover))}" alt="${esc(g.caption || CATS[g.category])}" loading="lazy" />
+            ${g.hasBA ? '<span class="badge ba">작업 전 · 후</span>' : g.nVideo && n > 1 ? '<span class="badge">▶ 영상 포함</span>' : ''}
+            ${onlyVideo ? '<span class="badge">영상</span>' + PLAY : ''}
+            ${n > 1 ? `<span class="cnt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>${n}</span>` : ''}
           </div>
           <div class="tx">
-            <div class="cat">${esc(CATS[it.category] || '')}</div>
-            <div class="cap">${esc(it.caption || '현장 작업')}</div>
-            <div class="meta">${esc([dateTxt(it.taken_on), it.location].filter(Boolean).join(' · '))}</div>
+            <div class="cat">${esc(CATS[g.category] || '')}</div>
+            <div class="cap">${esc(g.caption || '현장 작업')}</div>
+            <div class="meta">${esc([dateTxt(g.taken_on), g.location].filter(Boolean).join(' · '))}${n > 1 ? ' <b>· ' + esc(parts) + '</b>' : ''}</div>
           </div>
-        </button>`).join('');
+        </button>`;
+      }).join('');
       $('more').hidden = L.length <= shown;
     }
     $('more').addEventListener('click', () => { shown += PAGE; render(); });
-    $('grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) open(+c.dataset.i); });
+    $('grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) open(list()[+c.dataset.i], 0); });
 
-    // ---------- 크게 보기 ----------
+    // ---------- 크게 보기 (한 현장 안에서 넘기기) ----------
     function stage(it) {
       if (it.kind === 'youtube') return `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(it.youtube_id)}?autoplay=1&rel=0&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="${esc(it.caption || '현장 영상')}"></iframe>`;
       if (it.kind === 'video') return `<video src="${esc(fileUrl(it.media_path))}" poster="${esc(fileUrl(it.thumb_path))}" controls playsinline></video>`;
       if (it.kind === 'beforeafter') return `<div class="ba" id="ba"><img src="${esc(fileUrl(it.media_path))}" alt="작업 전" /><div class="after" id="baAfter"><img src="${esc(fileUrl(it.after_path))}" alt="작업 후" id="baImg" /></div><div class="bar" id="baBar"><span class="knob">⇆</span></div><span class="lbl l">작업 전</span><span class="lbl r">작업 후</span></div>`;
       return `<img src="${esc(fileUrl(it.media_path))}" alt="${esc(it.caption || '현장 사진')}" />`;
     }
-    function open(i) {
-      const L = list(); if (!L[i]) return; idx = i; const it = L[i];
+    function open(g, i) {
+      if (!g || !g.items[i]) return;
+      const fresh = cur !== g;
+      cur = g; idx = i; const it = g.items[i], n = g.items.length;
       $('lbStage').innerHTML = stage(it);
-      $('lbCap').innerHTML = `<b>${esc(it.caption || '현장 작업')}</b><span>${esc([CATS[it.category], dateTxt(it.taken_on), it.location].filter(Boolean).join(' · '))}</span>`;
-      $('lbCount').textContent = (i + 1) + ' / ' + L.length;
-      $('lbP').hidden = i === 0; $('lbN').hidden = i >= L.length - 1;
+      $('lbCap').innerHTML = `<b>${esc(g.caption || '현장 작업')}</b><span>${esc([CATS[g.category], dateTxt(g.taken_on), g.location].filter(Boolean).join(' · '))}</span>`;
+      $('lbCount').textContent = n > 1 ? (i + 1) + ' / ' + n : '';
+      $('lbP').hidden = i === 0; $('lbN').hidden = i >= n - 1;
+      // 아래 작은 사진 줄 (같은 현장의 사진·영상)
+      const strip = $('lbStrip');
+      strip.hidden = n < 2;
+      if (fresh) strip.innerHTML = g.items.map((x, k) => `<button data-k="${k}" aria-label="${k + 1}번째">
+          <img src="${esc(thumbOf(x))}" alt="" loading="lazy" />${x.kind === 'video' || x.kind === 'youtube' ? '<i>▶</i>' : x.kind === 'beforeafter' ? '<i>⇆</i>' : ''}</button>`).join('');
+      strip.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.k === i));
+      const on = strip.querySelector('.on'); if (on) on.scrollIntoView({ block: 'nearest', inline: 'center' });
       $('lb').classList.add('open'); document.body.style.overflow = 'hidden';
       if (it.kind === 'beforeafter') setupBA();
       // 영상: 배경 음악과 함께 재생 (브라우저가 막으면 소리 끄고 재생)
       const v = $('lbStage').querySelector('video');
       if (v) v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
     }
-    function close() { $('lb').classList.remove('open'); $('lbStage').innerHTML = ''; document.body.style.overflow = ''; }
+    function close() { $('lb').classList.remove('open'); $('lbStage').innerHTML = ''; $('lbStrip').innerHTML = ''; cur = null; document.body.style.overflow = ''; }
+    $('lbStrip').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) open(cur, +b.dataset.k); });
     $('lbX').addEventListener('click', close);
-    $('lbP').addEventListener('click', () => open(idx - 1));
-    $('lbN').addEventListener('click', () => open(idx + 1));
+    $('lbP').addEventListener('click', () => open(cur, idx - 1));
+    $('lbN').addEventListener('click', () => open(cur, idx + 1));
     document.addEventListener('keydown', e => {
       if (!$('lb').classList.contains('open')) return;
-      if (e.key === 'Escape') close(); if (e.key === 'ArrowLeft' && idx > 0) open(idx - 1); if (e.key === 'ArrowRight') open(idx + 1);
+      if (e.key === 'Escape') close(); if (e.key === 'ArrowLeft' && idx > 0) open(cur, idx - 1); if (e.key === 'ArrowRight') open(cur, idx + 1);
     });
     // 옆으로 밀어서 넘기기 (작업 전/후 비교 화면 제외)
     let sx = null;
     $('lbStage').addEventListener('touchstart', e => { sx = e.target.closest('#ba') ? null : e.touches[0].clientX; }, { passive: true });
     $('lbStage').addEventListener('touchend', e => {
       if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; sx = null;
-      if (dx > 60 && idx > 0) open(idx - 1); else if (dx < -60) open(idx + 1);
+      if (dx > 60 && idx > 0) open(cur, idx - 1); else if (dx < -60) open(cur, idx + 1);
     });
 
     function setupBA() {
