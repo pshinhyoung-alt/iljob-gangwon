@@ -51,7 +51,7 @@
     .card .ph img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s; }
     .card:hover .ph img { transform: scale(1.05); }
     .badge { position: absolute; left: 10px; top: 10px; padding: 4px 10px; border-radius: 999px; font-size: .75rem; font-weight: 800; background: rgba(10,19,48,.7); color: #fff; backdrop-filter: blur(4px); }
-    .badge.ba { background: var(--amber); color: var(--ink); }
+    .badge.ba, .badge.vid { background: var(--amber); color: var(--ink); }
     .play { position: absolute; inset: 0; display: grid; place-items: center; }
     .play span { width: 58px; height: 58px; border-radius: 50%; background: rgba(10,19,48,.6); display: grid; place-items: center; backdrop-filter: blur(4px); }
     .play svg { width: 24px; height: 24px; margin-left: 4px; color: #fff; }
@@ -200,7 +200,7 @@
         const first = L.reduce((m, x) => x.id < m.id ? x : m, L[0]);
         return {
           id: first.id, items: L, category: first.category, caption: first.caption, location: first.location, taken_on: first.taken_on,
-          cover: photos.length ? photos.reduce((m, x) => x.id < m.id ? x : m) : L[0],
+          cover: L.find(x => x.kind === 'video' || x.kind === 'youtube') || (photos.length ? photos.reduce((m, x) => x.id < m.id ? x : m) : L[0]),
           last: Math.max(...L.map(x => x.id)),
           nPhoto: L.filter(x => x.kind === 'photo' || x.kind === 'beforeafter').length,
           nVideo: L.filter(x => x.kind === 'video' || x.kind === 'youtube').length,
@@ -247,8 +247,7 @@
         <button class="card${n > 1 ? ' album' : ''}" data-i="${i}">
           <div class="ph">
             <img src="${esc(thumbOf(g.cover))}" alt="${esc(g.caption || CATS[g.category])}" loading="lazy" />
-            ${g.hasBA ? '<span class="badge ba">작업 전 · 후</span>' : g.nVideo && n > 1 ? '<span class="badge">▶ 영상 포함</span>' : ''}
-            ${onlyVideo ? '<span class="badge">영상</span>' + PLAY : ''}
+            ${g.nVideo ? '<span class="badge vid">' + (n > 1 ? '▶ 영상 포함' : '영상') + '</span>' + PLAY : g.hasBA ? '<span class="badge ba">작업 전 · 후</span>' : ''}
             ${n > 1 ? `<span class="cnt"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>${n}</span>` : ''}
           </div>
           <div class="tx">

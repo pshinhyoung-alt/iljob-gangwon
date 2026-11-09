@@ -101,6 +101,7 @@ ${musicPicker('V')}
           </div>
 ${musicPicker('S')}
           <div id="gSlideOut" hidden>
+            <p class="g-warn">⚠️ 아직 갤러리에 <b>올라가지 않았어요.</b> 확인 후 맨 아래 <b>[갤러리에 올리기]</b>를 눌러 주세요.</p>
             <video id="gSlidePrev" controls playsinline></video>
             <div class="g-row"><a class="btn btn-light" id="gSlideDown" download>📥 휴대폰에 저장 (인스타·블로그용)</a></div>
           </div>
@@ -395,6 +396,7 @@ ${musicPicker('S')}
           $('gSlidePrev').src = url; $('gSlideOut').hidden = false;
           $('gSlideDown').href = url; $('gSlideDown').download = `일잡코리아_${CATS[base.category].replace(/[^\w가-힣]/g, '')}_${today()}.${out.mime.includes('mp4') ? 'mp4' : 'webm'}`;
           progress(null); setMode('slideshow');
+          $('gSlideOut').scrollIntoView({ behavior: 'smooth', block: 'center' });
           toast('홍보영상이 완성됐어요. 확인 후 [갤러리에 올리기] 또는 [휴대폰에 저장]을 누르세요.');
           return;
         }
