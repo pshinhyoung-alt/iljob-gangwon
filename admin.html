@@ -15,6 +15,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
+  <script src="media-tools.js" defer></script>
+  <script src="admin-gallery.js" defer></script>
   <style>
     :root {
       --navy: #0a1330; --blue: #2f6bff; --amber: #ffb020; --ink: #0f172a; --sub: #5a6478;
@@ -152,6 +154,81 @@
       padding: 12px 18px; border-radius: 12px; font-weight: 700; font-size: .92rem; opacity: 0; transition: all .3s; z-index: 80; pointer-events: none; }
     .toast.show { opacity: 1; transform: translateX(-50%); }
 
+
+    /* ---------- 화면 전환 탭 ---------- */
+    .vtabs { display: flex; gap: 8px; margin: 20px 0 0; }
+    .vtabs button { padding: 11px 18px; border-radius: 12px; font-weight: 800; background: #fff; border: 1px solid var(--line); }
+    .vtabs button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+    /* ---------- 현장 갤러리 관리 ---------- */
+    .g-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 24px; margin: 18px 0; }
+    .g-card h2 { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
+    .g-card h2 small { font-size: .85rem; color: var(--sub); font-weight: 600; margin-left: 4px; }
+    .g-sub { color: var(--sub); font-size: .9rem; margin: 4px 0 16px; }
+    .g-sub a { color: var(--blue); }
+    .g-modes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    .g-modes button { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: #fbfcfe; font-weight: 700; font-size: .92rem; }
+    .g-modes button.on { background: var(--blue); color: #fff; border-color: var(--blue); }
+    .g-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; margin-bottom: 14px; }
+    .g-grid2 label, .g-pane > label { display: block; font-size: .85rem; font-weight: 700; color: var(--sub); }
+    .g-grid2 label small { font-weight: 500; }
+    .g-grid2 .field-in, .g-pane > label .field-in { margin-top: 5px; }
+    .g-grid2 input[type=range] { width: 100%; margin-top: 14px; }
+    .g-pane { margin-bottom: 14px; }
+    .g-drop { display: flex !important; align-items: center; justify-content: center; min-height: 92px; border: 2px dashed #c9d3ea; border-radius: 14px;
+      background: #f7f9ff; color: var(--blue) !important; font-weight: 800 !important; font-size: 1rem !important; cursor: pointer; text-align: center; padding: 10px; }
+    .g-drop.sm { min-height: 60px; font-size: .92rem !important; margin: 6px 0; }
+    .g-drop:hover { background: #eef3ff; }
+    .g-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-top: 12px; }
+    .g-thumbs.sm { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); }
+    .g-th { position: relative; border-radius: 12px; overflow: hidden; background: #e9edf5; aspect-ratio: 4 / 3; }
+    .g-th img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .g-del { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; background: rgba(10,19,48,.75); color: #fff; font-size: 1.1rem; line-height: 1; }
+    .g-up { position: absolute; top: 6px; left: 6px; width: 28px; height: 28px; border-radius: 50%; background: rgba(10,19,48,.75); color: #fff; font-size: .75rem; }
+    .g-num { position: absolute; left: 6px; bottom: 6px; background: var(--amber); color: var(--ink); font-weight: 800; font-size: .78rem; padding: 2px 8px; border-radius: 999px; }
+    .g-blurbtn { position: absolute; left: 6px; right: 6px; bottom: 6px; padding: 6px; border-radius: 8px; background: rgba(255,255,255,.92); font-weight: 800; font-size: .8rem; }
+    .g-tag { position: absolute; left: 6px; top: 6px; background: var(--amber); color: var(--ink); font-weight: 800; font-size: .72rem; padding: 2px 8px; border-radius: 999px; }
+    .g-ba { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .g-ba b { font-size: .9rem; }
+    .g-tip { color: var(--sub); font-size: .85rem; margin-top: 10px; line-height: 1.55; }
+    .g-tip b { color: var(--ink); }
+    .g-ytimg { width: min(360px, 100%); border-radius: 12px; margin-top: 10px; display: block; }
+    #gVideoPrev, #gSlidePrev { width: 100%; max-height: 360px; background: #000; border-radius: 12px; margin: 12px 0; }
+    .g-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .g-check { display: flex; align-items: center; gap: 8px; font-weight: 700; margin: 6px 0 14px; cursor: pointer; }
+    .g-check input { width: 18px; height: 18px; accent-color: var(--blue); }
+    .g-prog { margin-bottom: 12px; }
+    .g-bar { height: 10px; background: #e9edf5; border-radius: 999px; overflow: hidden; }
+    .g-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--blue), #5b8cff); transition: width .2s; }
+    .g-prog span { display: block; font-size: .85rem; font-weight: 700; color: var(--blue); margin-top: 6px; }
+    .g-submit { width: 100%; padding: 15px; font-size: 1.02rem; }
+    .g-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .g-head-r { display: flex; gap: 8px; }
+    .g-head-r .field-in { width: auto; }
+    .g-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+    .g-item { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+    .g-item.off { opacity: .55; }
+    .g-item .g-ph { position: relative; aspect-ratio: 4 / 3; background: #e9edf5; }
+    .g-item .g-ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .g-kind { position: absolute; left: 8px; top: 8px; background: rgba(10,19,48,.75); color: #fff; font-size: .72rem; font-weight: 800; padding: 3px 8px; border-radius: 999px; }
+    .g-tx { padding: 10px 12px 4px; font-size: .88rem; }
+    .g-tx b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .g-tx span { color: var(--sub); font-size: .8rem; }
+    .g-act { display: flex; gap: 6px; padding: 8px 12px 12px; margin-top: auto; }
+    .g-act .btn { flex: 1; padding: 8px; font-size: .82rem; }
+    .g-blur { position: fixed; inset: 0; z-index: 90; background: rgba(5,8,20,.92); display: flex; align-items: center; justify-content: center; padding: 14px; }
+    .g-blur-in { width: min(900px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 10px; }
+    .g-blur-top { color: #fff; text-align: center; font-size: .95rem; }
+    .g-blur-stage { min-height: 0; display: flex; justify-content: center; }
+    .g-blur-stage canvas { max-width: 100%; max-height: calc(100vh - 150px); border-radius: 8px; touch-action: none; cursor: crosshair; background: #000; }
+    .g-blur-bot { display: flex; gap: 8px; flex-wrap: wrap; }
+    @media (max-width: 640px) {
+      .g-card { padding: 18px 14px; }
+      .g-grid2, .g-ba { grid-template-columns: 1fr; }
+      .g-modes button { flex: 1 1 45%; }
+      .g-list { grid-template-columns: 1fr 1fr; }
+      .g-act { flex-direction: column; }
+    }
     @media (max-width: 1100px) {
       .head { display: none; }
       .row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nm st" "ph tp" "fd fd" "tm cn"; gap: 4px 10px; padding: 14px 16px; }
@@ -226,6 +303,8 @@
     </header>
 
     <main class="wrap">
+      <div class="vtabs" id="vtabs"><button data-v="inq" class="on">📋 접수 관리</button><button data-v="gal">📷 현장 갤러리</button></div>
+      <div id="inqView">
       <div class="stats">
         <button class="stat" data-quick="unread"><span class="lb"><i style="background:var(--red)"></i>확인 안 한 접수</span><b id="stUnread">0</b></button>
         <button class="stat" data-quick="today"><span class="lb"><i style="background:var(--amber)"></i>오늘 들어온 접수</span><b id="stToday">0</b></button>
@@ -257,6 +336,8 @@
         <div id="rows"></div>
       </div>
       <p class="foot-note" id="footNote"></p>
+      </div>
+      <div id="galView" hidden></div>
     </main>
   </div>
 
@@ -363,6 +444,16 @@
 
     if (!CFG.SUPABASE_URL || !CFG.SUPABASE_ANON_KEY || !window.supabase) { show('vSetup'); return; }
     const sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY);
+    // 화면 전환: 접수 관리 / 현장 갤러리
+    $('vtabs').addEventListener('click', e => {
+      const b = e.target.closest('[data-v]'); if (!b) return;
+      $('vtabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+      $('inqView').hidden = b.dataset.v !== 'inq'; $('galView').hidden = b.dataset.v !== 'gal';
+      if (b.dataset.v === 'gal') {
+        if (window.AdminGallery) window.AdminGallery.init({ sb, toast });
+        else toast('갤러리 기능을 불러오는 중입니다. 잠시 후 다시 눌러 주세요.');
+      }
+    });
 
     let all = [], filtered = [], current = null, mode = 'view', typeF = '', quickF = '', lastUnread = -1, pollTimer = null;
 

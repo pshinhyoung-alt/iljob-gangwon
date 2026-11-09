@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>현장 갤러리 | 일잡코리아 강원본부</title>
+  <meta name="description" content="일잡코리아 강원본부의 실제 작업 현장 사진과 영상 - 돌봄·집수리·건설·청소·폐기물·농업" />
+  <meta property="og:title" content="현장 갤러리 | 일잡코리아 강원본부" />
+  <meta property="og:description" content="실제 작업 현장 사진과 영상을 확인하세요. 원주·강원 인력사무소 033-731-5282" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://pshinhyoung-alt.github.io/iljob-gangwon/gallery.html" />
+  <meta property="og:image" content="https://pshinhyoung-alt.github.io/iljob-gangwon/images/og-image.jpg" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="theme-color" content="#0a1330" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="icons/app-apple-180.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <script src="config.js"></script>
+  <style>
+    :root { --navy: #0a1330; --blue: #2f6bff; --amber: #ffb020; --ink: #0f172a; --sub: #5a6478; --line: #e6e9f0; --bg: #f7f8fb; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    [hidden] { display: none !important; }
+    body { font-family: 'Pretendard', -apple-system, 'Malgun Gothic', sans-serif; color: var(--ink); background: var(--bg); line-height: 1.6; word-break: keep-all; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; cursor: pointer; border: 0; background: none; color: inherit; }
+    .wrap { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+    .top { background: var(--navy); color: #fff; position: sticky; top: 0; z-index: 20; }
+    .top .wrap { height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; }
+    .brand .mk { width: 34px; height: 34px; border-radius: 10px; background: var(--blue); display: grid; place-items: center; font-weight: 900; }
+    .top-r { display: flex; gap: 8px; }
+    .pill { padding: 8px 14px; border-radius: 999px; font-weight: 700; font-size: .9rem; background: rgba(255,255,255,.1); white-space: nowrap; }
+    .pill.call { background: var(--amber); color: var(--ink); }
+
+    .hero { background: linear-gradient(160deg, #1a3fb8 0%, var(--navy) 70%); color: #fff; padding: 48px 0 70px; }
+    .hero h1 { font-size: clamp(1.9rem, 4.6vw, 2.8rem); font-weight: 800; letter-spacing: -0.04em; }
+    .hero p { color: rgba(255,255,255,.72); margin-top: 8px; }
+    .tabs { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 10px; margin: -38px 0 18px; scrollbar-width: none; position: relative; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tabs button { flex: none; padding: 11px 18px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-weight: 700; font-size: .95rem; box-shadow: 0 6px 18px rgba(10,19,48,.08); }
+    .tabs button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+    .tabs button small { font-weight: 600; opacity: .6; margin-left: 4px; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 18px; overflow: hidden; text-align: left; transition: transform .25s, box-shadow .25s; }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 18px 36px rgba(10,19,48,.12); }
+    .card .ph { position: relative; aspect-ratio: 4 / 3; background: #dfe4ee; overflow: hidden; }
+    .card .ph img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .5s; }
+    .card:hover .ph img { transform: scale(1.05); }
+    .badge { position: absolute; left: 10px; top: 10px; padding: 4px 10px; border-radius: 999px; font-size: .75rem; font-weight: 800; background: rgba(10,19,48,.7); color: #fff; backdrop-filter: blur(4px); }
+    .badge.ba { background: var(--amber); color: var(--ink); }
+    .play { position: absolute; inset: 0; display: grid; place-items: center; }
+    .play span { width: 58px; height: 58px; border-radius: 50%; background: rgba(10,19,48,.6); display: grid; place-items: center; backdrop-filter: blur(4px); }
+    .play svg { width: 24px; height: 24px; margin-left: 4px; color: #fff; }
+    .card .tx { padding: 14px 16px 16px; }
+    .card .cat { font-size: .78rem; font-weight: 800; color: var(--blue); }
+    .card .cap { font-weight: 700; margin: 2px 0 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card .meta { font-size: .82rem; color: var(--sub); }
+    .more { display: block; margin: 26px auto 0; padding: 13px 28px; border-radius: 999px; background: #fff; border: 1px solid var(--line); font-weight: 700; }
+    .empty { text-align: center; padding: 70px 20px; background: #fff; border: 1px dashed #cfd6e4; border-radius: 20px; color: var(--sub); }
+    .empty b { display: block; font-size: 1.15rem; color: var(--ink); margin-bottom: 6px; }
+    .cta { margin: 50px 0 70px; background: var(--navy); color: #fff; border-radius: 26px; padding: 40px 28px; text-align: center; }
+    .cta h2 { font-size: clamp(1.4rem, 3.4vw, 2rem); font-weight: 800; letter-spacing: -0.03em; }
+    .cta p { color: rgba(255,255,255,.7); margin: 6px 0 22px; }
+    .cta .row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .cta a { padding: 15px 24px; border-radius: 999px; font-weight: 800; }
+    .cta .a1 { background: var(--amber); color: var(--ink); }
+    .cta .a2 { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); }
+
+    /* 크게 보기 */
+    .lb { position: fixed; inset: 0; z-index: 100; background: rgba(5,8,20,.94); display: flex; flex-direction: column; opacity: 0; visibility: hidden; transition: opacity .25s, visibility .25s; }
+    .lb.open { opacity: 1; visibility: visible; }
+    .lb-top { display: flex; justify-content: space-between; align-items: center; padding: 14px 18px; color: #fff; gap: 12px; }
+    .lb-top .t { font-size: .9rem; color: rgba(255,255,255,.7); }
+    .lb-x { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; flex: none; }
+    .lb-x svg { width: 20px; height: 20px; }
+    .lb-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 0 60px; position: relative; }
+    .lb-stage img, .lb-stage video { max-width: 100%; max-height: 100%; border-radius: 10px; display: block; }
+    .lb-stage iframe { width: min(100%, 960px); aspect-ratio: 16 / 9; border: 0; border-radius: 10px; }
+    .nav { position: absolute; top: 50%; transform: translateY(-50%); width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; }
+    .nav svg { width: 22px; height: 22px; }
+    .nav.p { left: 8px; } .nav.n { right: 8px; }
+    .lb-cap { color: #fff; padding: 14px 20px 22px; text-align: center; }
+    .lb-cap b { display: block; font-size: 1.05rem; }
+    .lb-cap span { color: rgba(255,255,255,.6); font-size: .88rem; }
+    /* 작업 전/후 비교 */
+    .ba { position: relative; max-width: 100%; max-height: 100%; user-select: none; touch-action: none; border-radius: 10px; overflow: hidden; }
+    .ba img { display: block; max-height: calc(100vh - 200px); max-width: 100%; }
+    .ba .after { position: absolute; inset: 0; overflow: hidden; }
+    .ba .after img { position: absolute; left: 0; top: 0; height: 100%; width: auto; max-width: none; }
+    .ba .bar { position: absolute; top: 0; bottom: 0; width: 3px; background: #fff; transform: translateX(-50%); box-shadow: 0 0 10px rgba(0,0,0,.4); }
+    .ba .knob { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 44px; height: 44px; border-radius: 50%; background: #fff; display: grid; place-items: center; color: var(--ink); font-weight: 900; font-size: .9rem; }
+    .ba .lbl { position: absolute; top: 12px; padding: 4px 10px; border-radius: 999px; font-size: .78rem; font-weight: 800; background: rgba(10,19,48,.7); color: #fff; }
+    .ba .lbl.l { left: 12px; } .ba .lbl.r { right: 12px; background: var(--amber); color: var(--ink); }
+
+    @media (max-width: 640px) {
+      .wrap { padding: 0 14px; }
+      .top-r .pill:not(.call) { display: none; }
+      .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+      .card { border-radius: 14px; }
+      .card .tx { padding: 10px 12px 12px; }
+      .card .cap { font-size: .9rem; }
+      .lb-stage { padding: 0 6px; }
+      .nav { width: 40px; height: 40px; background: rgba(10,19,48,.5); }
+    }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href="./"><span class="mk">일</span>일잡코리아</a>
+      <div class="top-r">
+        <a class="pill" href="./">홈페이지</a>
+        <a class="pill call" href="tel:0337315282">033-731-5282</a>
+      </div>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="wrap">
+      <h1>현장 갤러리</h1>
+      <p>일잡코리아 강원본부가 직접 다녀온 실제 작업 현장입니다.</p>
+    </div>
+  </section>
+
+  <main class="wrap">
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <div class="grid" id="grid" aria-live="polite"></div>
+    <div class="empty" id="empty" hidden><b>현장 사진을 준비하고 있습니다</b>곧 실제 작업 현장 사진과 영상으로 찾아뵙겠습니다.</div>
+    <button class="more" id="more" hidden>더 보기</button>
+
+    <div class="cta">
+      <h2>이런 일손이 필요하신가요?</h2>
+      <p>내외국인 우수 인력 항시 대기 · 당일 매칭 가능</p>
+      <div class="row">
+        <a class="a1" href="tel:0337315282">📞 033-731-5282 전화 상담</a>
+        <a class="a2" href="./?action=employer">인력 요청하기</a>
+      </div>
+    </div>
+  </main>
+
+  <div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="크게 보기">
+    <div class="lb-top"><span class="t" id="lbCount"></span>
+      <button class="lb-x" id="lbX" aria-label="닫기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+    <div class="lb-stage" id="lbStage"></div>
+    <button class="nav p" id="lbP" aria-label="이전"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg></button>
+    <button class="nav n" id="lbN" aria-label="다음"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
+    <div class="lb-cap" id="lbCap"></div>
+  </div>
+
+  <script>
+  (function () {
+    const CFG = window.ILJOB_CONFIG || {};
+    const BASE = (CFG.SUPABASE_URL || '').replace(/\/$/, '');
+    const KEY = CFG.SUPABASE_ANON_KEY || '';
+    const CATS = { care: '돌봄·간병', repair: '생활 돌봄(집수리)', construction: '건설', cleaning: '입주·숙소 청소', waste: '폐기물 처리', farm: '농업' };
+    const PAGE = 24;
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fileUrl = p => p ? BASE + '/storage/v1/object/public/gallery/' + p.split('/').map(encodeURIComponent).join('/') : '';
+    const thumbOf = it => it.kind === 'youtube' ? 'https://i.ytimg.com/vi/' + encodeURIComponent(it.youtube_id) + '/hqdefault.jpg' : fileUrl(it.thumb_path || it.media_path);
+    const dateTxt = d => d ? d.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$1.$2.$3') : '';
+
+    let items = [], counts = {}, cat = new URLSearchParams(location.search).get('cat') || '', shown = PAGE, idx = -1;
+    if (cat && !CATS[cat]) cat = '';
+
+    async function load() {
+      if (!BASE || !KEY) { $('empty').hidden = false; return; }
+      try {
+        const res = await fetch(BASE + '/rest/v1/gallery_items?select=*&published=eq.true&order=taken_on.desc,id.desc&limit=500',
+          { headers: { apikey: KEY, Authorization: 'Bearer ' + KEY } });
+        items = res.ok ? await res.json() : [];
+      } catch (_) { items = []; }
+      counts = items.reduce((m, it) => (m[it.category] = (m[it.category] || 0) + 1, m), {});
+      tabs(); render();
+    }
+
+    function tabs() {
+      const list = [['', '전체', items.length]].concat(Object.entries(CATS).map(([k, v]) => [k, v, counts[k] || 0]));
+      $('tabs').innerHTML = list.map(([k, v, n]) => `<button role="tab" data-c="${k}" class="${k === cat ? 'on' : ''}" aria-selected="${k === cat}">${esc(v)}<small>${n}</small></button>`).join('');
+    }
+    $('tabs').addEventListener('click', e => {
+      const b = e.target.closest('[data-c]'); if (!b) return;
+      cat = b.dataset.c; shown = PAGE; tabs(); render();
+      history.replaceState(null, '', cat ? '?cat=' + cat : location.pathname);
+    });
+
+    const list = () => items.filter(it => !cat || it.category === cat);
+    function render() {
+      const L = list();
+      $('empty').hidden = L.length > 0;
+      $('grid').innerHTML = L.slice(0, shown).map((it, i) => `
+        <button class="card" data-i="${i}">
+          <div class="ph">
+            <img src="${esc(thumbOf(it))}" alt="${esc(it.caption || CATS[it.category])}" loading="lazy" />
+            ${it.kind === 'beforeafter' ? '<span class="badge ba">작업 전 · 후</span>' : ''}
+            ${it.kind === 'video' || it.kind === 'youtube' ? '<span class="badge">영상</span><span class="play"><span><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></span></span>' : ''}
+          </div>
+          <div class="tx">
+            <div class="cat">${esc(CATS[it.category] || '')}</div>
+            <div class="cap">${esc(it.caption || '현장 작업')}</div>
+            <div class="meta">${esc([dateTxt(it.taken_on), it.location].filter(Boolean).join(' · '))}</div>
+          </div>
+        </button>`).join('');
+      $('more').hidden = L.length <= shown;
+    }
+    $('more').addEventListener('click', () => { shown += PAGE; render(); });
+    $('grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) open(+c.dataset.i); });
+
+    // ---------- 크게 보기 ----------
+    function stage(it) {
+      if (it.kind === 'youtube') return `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(it.youtube_id)}?autoplay=1&rel=0&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="${esc(it.caption || '현장 영상')}"></iframe>`;
+      if (it.kind === 'video') return `<video src="${esc(fileUrl(it.media_path))}" poster="${esc(fileUrl(it.thumb_path))}" controls autoplay muted playsinline></video>`;
+      if (it.kind === 'beforeafter') return `<div class="ba" id="ba"><img src="${esc(fileUrl(it.media_path))}" alt="작업 전" /><div class="after" id="baAfter"><img src="${esc(fileUrl(it.after_path))}" alt="작업 후" id="baImg" /></div><div class="bar" id="baBar"><span class="knob">⇆</span></div><span class="lbl l">작업 전</span><span class="lbl r">작업 후</span></div>`;
+      return `<img src="${esc(fileUrl(it.media_path))}" alt="${esc(it.caption || '현장 사진')}" />`;
+    }
+    function open(i) {
+      const L = list(); if (!L[i]) return; idx = i; const it = L[i];
+      $('lbStage').innerHTML = stage(it);
+      $('lbCap').innerHTML = `<b>${esc(it.caption || '현장 작업')}</b><span>${esc([CATS[it.category], dateTxt(it.taken_on), it.location].filter(Boolean).join(' · '))}</span>`;
+      $('lbCount').textContent = (i + 1) + ' / ' + L.length;
+      $('lbP').hidden = i === 0; $('lbN').hidden = i >= L.length - 1;
+      $('lb').classList.add('open'); document.body.style.overflow = 'hidden';
+      if (it.kind === 'beforeafter') setupBA();
+    }
+    function close() { $('lb').classList.remove('open'); $('lbStage').innerHTML = ''; document.body.style.overflow = ''; }
+    $('lbX').addEventListener('click', close);
+    $('lbP').addEventListener('click', () => open(idx - 1));
+    $('lbN').addEventListener('click', () => open(idx + 1));
+    document.addEventListener('keydown', e => {
+      if (!$('lb').classList.contains('open')) return;
+      if (e.key === 'Escape') close(); if (e.key === 'ArrowLeft' && idx > 0) open(idx - 1); if (e.key === 'ArrowRight') open(idx + 1);
+    });
+    // 옆으로 밀어서 넘기기 (작업 전/후 비교 화면 제외)
+    let sx = null;
+    $('lbStage').addEventListener('touchstart', e => { sx = e.target.closest('#ba') ? null : e.touches[0].clientX; }, { passive: true });
+    $('lbStage').addEventListener('touchend', e => {
+      if (sx == null) return; const dx = e.changedTouches[0].clientX - sx; sx = null;
+      if (dx > 60 && idx > 0) open(idx - 1); else if (dx < -60) open(idx + 1);
+    });
+
+    function setupBA() {
+      const box = $('ba'), after = $('baAfter'), bar = $('baBar'), img = $('baImg');
+      const base = box.querySelector('img');
+      const set = pct => { pct = Math.max(0, Math.min(100, pct)); after.style.clipPath = `inset(0 0 0 ${pct}%)`; bar.style.left = pct + '%'; };
+      const fit = () => { img.style.width = base.clientWidth + 'px'; img.style.height = base.clientHeight + 'px'; };
+      base.complete ? fit() : base.addEventListener('load', fit); window.addEventListener('resize', fit);
+      set(50);
+      const move = e => { const r = box.getBoundingClientRect(); const x = (e.touches ? e.touches[0].clientX : e.clientX) - r.left; set(x / r.width * 100); };
+      let drag = false;
+      box.addEventListener('pointerdown', e => { drag = true; box.setPointerCapture(e.pointerId); move(e); });
+      box.addEventListener('pointermove', e => { if (drag) move(e); });
+      box.addEventListener('pointerup', () => { drag = false; });
+    }
+
+    if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+    load();
+  })();
+  </script>
+</body>
+</html>
