@@ -420,29 +420,90 @@ ${musicPicker('S')}
     if (error) throw new Error('저장 실패: ' + error.message);
   }
 
-  /* ---------------- 목록 ---------------- */
+  /* ---------------- 목록 (현장 묶음 단위) ---------------- */
+  // 분야 · 날짜 · 지역 · 설명이 같으면(띄어쓰기 무시) 한 현장
+  const groupKey = it => [it.category, it.taken_on || '', (it.location || '').replace(/\s+/g, ''), (it.caption || '').replace(/\s+/g, '')].join('|');
+  const isVid = it => it.kind === 'video' || it.kind === 'youtube';
+  const KIND_TXT = { photo: '사진', beforeafter: '전·후', video: '영상', youtube: '유튜브' };
+  const openGroups = new Set();
+  let groups = [];
+
   async function loadList() {
-    const { data, error } = await sb.from('gallery_items').select('*').order('taken_on', { ascending: false }).order('id', { ascending: false }).limit(500);
+    const { data, error } = await sb.from('gallery_items').select('*').order('taken_on', { ascending: false }).order('id', { ascending: false }).limit(1000);
     if (error) {
       $('gList').innerHTML = `<p class="g-tip">갤러리 목록을 불러오지 못했습니다. (${esc(error.message)})<br>Supabase 에서 <b>gallery_setup.sql</b> 을 실행했는지 확인해 주세요.</p>`;
       return;
     }
-    items = data || []; drawList();
+    items = data || [];
+    const map = new Map();
+    items.forEach(it => { const k = groupKey(it); if (!map.has(k)) map.set(k, []); map.get(k).push(it); });
+    groups = [...map.entries()].map(([key, L]) => {
+      L.sort((a, b) => (isVid(b) - isVid(a)) || (a.id - b.id));
+      const first = L.reduce((m, x) => x.id < m.id ? x : m, L[0]);
+      return { key, L, first, cover: L.find(isVid) || first, photos: L.filter(x => !isVid(x)), videos: L.filter(isVid) };
+    });
+    drawList();
   }
   function drawList() {
-    const L = items.filter(it => !listCat || it.category === listCat);
-    $('gCount').textContent = `${L.length}개`;
-    $('gList').innerHTML = L.length ? L.map(it => `
-      <div class="g-item${it.published ? '' : ' off'}" data-id="${it.id}">
-        <div class="g-ph"><img src="${esc(thumbOf(it))}" alt="" loading="lazy" /><span class="g-kind">${{ photo: '사진', beforeafter: '전·후', video: '영상', youtube: '유튜브' }[it.kind]}</span></div>
-        <div class="g-tx"><b>${esc(it.caption || '(설명 없음)')}</b><span>${esc(CATS[it.category])} · ${esc(it.taken_on)}${it.location ? ' · ' + esc(it.location) : ''}</span></div>
-        <div class="g-act">
-          <button type="button" class="btn btn-light" data-a="toggle">${it.published ? '숨기기' : '공개하기'}</button>
-          <button type="button" class="btn btn-danger" data-a="del">삭제</button>
-        </div>
-      </div>`).join('') : '<p class="g-tip">아직 올린 사진·영상이 없습니다.</p>';
+    const G = groups.filter(g => !listCat || g.first.category === listCat);
+    $('gCount').textContent = `현장 ${G.length}곳 · ${G.reduce((n, g) => n + g.L.length, 0)}개`;
+    $('gList').innerHTML = G.length ? G.map((g, gi) => {
+      const shown = g.L.filter(x => x.published).length;
+      const pShown = g.photos.filter(x => x.published).length;
+      const vShown = g.videos.filter(x => x.published).length;
+      const counts = [g.photos.length ? `사진 ${g.photos.length}` : '', g.videos.length ? `영상 ${g.videos.length}` : ''].filter(Boolean).join(' · ');
+      const state = shown === 0 ? '<em class="g-st off">전체 숨김</em>' : shown < g.L.length ? `<em class="g-st part">${g.L.length - shown}개 숨김</em>` : '<em class="g-st on">모두 공개</em>';
+      const btns = [];
+      if (g.videos.length && g.photos.length) {
+        btns.push(pShown ? `<button type="button" class="btn btn-amber" data-g="photosOff">📷 사진 숨기고 영상만 보이기</button>`
+                         : `<button type="button" class="btn btn-light" data-g="photosOn">📷 사진 다시 보이기</button>`);
+        if (!vShown) btns.push(`<button type="button" class="btn btn-light" data-g="videosOn">🎬 영상 다시 보이기</button>`);
+      }
+      btns.push(shown ? `<button type="button" class="btn btn-light" data-g="allOff">현장 전체 숨기기</button>` : `<button type="button" class="btn btn-light" data-g="allOn">현장 전체 공개</button>`);
+      if (g.L.length > 1) btns.push(`<button type="button" class="btn btn-light" data-g="toggle">${openGroups.has(g.key) ? '접기 ▴' : '하나씩 보기 ▾'}</button>`);
+      const tiles = (g.L.length === 1 || openGroups.has(g.key)) ? `<div class="g-tiles">${g.L.map(it => `
+          <div class="g-item${it.published ? '' : ' off'}" data-id="${it.id}">
+            <div class="g-ph"><img src="${esc(thumbOf(it))}" alt="" loading="lazy" /><span class="g-kind">${KIND_TXT[it.kind]}${it.published ? '' : ' · 숨김'}</span></div>
+            <div class="g-act">
+              <button type="button" class="btn btn-light" data-a="toggle">${it.published ? '숨기기' : '공개하기'}</button>
+              <button type="button" class="btn btn-danger" data-a="del">삭제</button>
+            </div>
+          </div>`).join('')}</div>` : '';
+      return `
+      <div class="g-group${shown ? '' : ' off'}" data-gi="${gi}">
+        <div class="g-gtop">
+          <div class="g-gph"><img src="${esc(thumbOf(g.cover))}" alt="" loading="lazy" />${g.videos.length ? '<span class="g-kind">▶ 영상</span>' : ''}${g.L.length > 1 ? `<span class="g-gn">${g.L.length}</span>` : ''}</div>
+          <div class="g-gtx">
+            <b>${esc(g.first.caption || '(설명 없음)')}</b>
+            <span>${esc(CATS[g.first.category])} · ${esc(g.first.taken_on || '')}${g.first.location ? ' · ' + esc(g.first.location) : ''}</span>
+            <span>${counts} ${state}</span>
+            <div class="g-gbtn">${btns.join('')}</div>
+          </div>
+        </div>${tiles}
+      </div>`;
+    }).join('') : '<p class="g-tip">아직 올린 사진·영상이 없습니다.</p>';
+    G.forEach((g, gi) => { const el = $('gList').querySelector(`[data-gi="${gi}"]`); if (el) el._g = g; });
+  }
+  async function setPublished(list, value, msg) {
+    const ids = list.filter(x => x.published !== value).map(x => x.id);
+    if (!ids.length) return;
+    const { error } = await sb.from('gallery_items').update({ published: value }).in('id', ids);
+    if (error) return toast('변경 실패: ' + error.message);
+    toast(msg); loadList();
   }
   async function listAction(e) {
+    const gb = e.target.closest('[data-g]');
+    if (gb) {
+      const g = gb.closest('.g-group')._g; if (!g) return;
+      const a = gb.dataset.g;
+      if (a === 'toggle') { openGroups.has(g.key) ? openGroups.delete(g.key) : openGroups.add(g.key); drawList(); return; }
+      if (a === 'photosOff') return setPublished(g.photos, false, `사진 ${g.photos.length}장을 숨겼습니다. 홈페이지에는 영상만 보입니다.`);
+      if (a === 'photosOn') return setPublished(g.photos, true, '사진을 다시 공개했습니다');
+      if (a === 'videosOn') return setPublished(g.videos, true, '영상을 다시 공개했습니다');
+      if (a === 'allOff') return setPublished(g.L, false, '이 현장을 갤러리에서 숨겼습니다');
+      if (a === 'allOn') return setPublished(g.L, true, '이 현장을 갤러리에 공개했습니다');
+      return;
+    }
     const b = e.target.closest('[data-a]'); if (!b) return;
     const it = items.find(x => String(x.id) === b.closest('[data-id]').dataset.id); if (!it) return;
     if (b.dataset.a === 'toggle') {
@@ -450,7 +511,7 @@ ${musicPicker('S')}
       if (error) return toast('변경 실패: ' + error.message);
       toast(it.published ? '갤러리에서 숨겼습니다' : '갤러리에 공개했습니다'); loadList();
     } else if (b.dataset.a === 'del') {
-      if (!confirm('이 사진·영상을 삭제할까요? 되돌릴 수 없습니다.')) return;
+      if (!confirm('이 사진·영상을 삭제할까요? 되돌릴 수 없습니다.\n(삭제 대신 [숨기기]를 쓰면 나중에 다시 공개할 수 있어요)')) return;
       const paths = [it.media_path, it.after_path, it.thumb_path].filter(Boolean);
       if (paths.length) await sb.storage.from('gallery').remove(paths);
       const { error } = await sb.from('gallery_items').delete().eq('id', it.id);

@@ -1986,7 +1986,7 @@
           if (!list || !list.length) return;
           // 같은 분야·날짜·지역·설명 = 한 현장으로 묶어서 최근 6개 현장만
           const map = new Map();
-          list.forEach(it => { const k = [it.category, it.taken_on || '', (it.location || '').trim(), (it.caption || '').trim()].join('|'); if (!map.has(k)) map.set(k, []); map.get(k).push(it); });
+          list.forEach(it => { const k = [it.category, it.taken_on || '', (it.location || '').replace(/\s+/g, ''), (it.caption || '').replace(/\s+/g, '')].join('|'); if (!map.has(k)) map.set(k, []); map.get(k).push(it); });
           groups = [...map.values()].slice(0, 6).map(L => {
             const photos = L.filter(x => x.kind === 'photo').sort((a, b) => a.id - b.id);
             const video = L.filter(isVid).sort((a, b) => b.id - a.id)[0] || null;   // 영상이 있으면 가장 최근 영상

@@ -190,7 +190,7 @@
     function makeGroups(items) {
       const map = new Map();
       items.forEach(it => {
-        const k = [it.category, it.taken_on || '', (it.location || '').trim(), (it.caption || '').trim()].join('|');
+        const k = [it.category, it.taken_on || '', (it.location || '').replace(/\s+/g, ''), (it.caption || '').replace(/\s+/g, '')].join('|');
         if (!map.has(k)) map.set(k, []);
         map.get(k).push(it);
       });
