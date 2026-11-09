@@ -80,7 +80,8 @@
               <label>시작 지점 <span id="gStartTxt">0초</span><input type="range" id="gStart" min="0" max="0" step="0.5" value="0" /></label>
               <label>길이<select class="field-in" id="gLen"><option value="10">10초</option><option value="15" selected>15초</option><option value="20">20초</option><option value="30">30초 (최대)</option></select></label>
             </div>
-            <p class="g-tip">자동으로 <b>길이 자르기 · 용량 줄이기 · 소리 제거 · 로고와 전화번호 넣기 · 대표 사진</b>을 만듭니다. 편집하는 동안 <b>화면을 끄거나 다른 앱으로 나가지 마세요.</b></p>
+${musicPicker('V')}
+            <p class="g-tip">자동으로 <b>길이 자르기 · 용량 줄이기 · 원본 소리 제거(대화·소음) · 배경 음악 넣기 · 로고와 전화번호 넣기 · 대표 사진</b>을 만듭니다. 편집하는 동안 <b>화면을 끄거나 다른 앱으로 나가지 마세요.</b></p>
           </div>
           <p class="g-tip" id="gVideoNo" hidden>⚠️ 이 브라우저는 영상 편집을 지원하지 않습니다. 크롬이나 최신 사파리로 열어 주세요.</p>
         </div>
@@ -98,11 +99,12 @@
             <label>영상 모양<select class="field-in" id="gOrient"><option value="portrait">세로 (쇼츠·릴스·카톡용)</option><option value="landscape">가로 (유튜브·홈페이지용)</option></select></label>
             <label>사진 한 장당<select class="field-in" id="gPer"><option value="2">2초</option><option value="3" selected>3초</option><option value="4">4초</option></select></label>
           </div>
+${musicPicker('S')}
           <div id="gSlideOut" hidden>
-            <video id="gSlidePrev" controls playsinline muted></video>
+            <video id="gSlidePrev" controls playsinline></video>
             <div class="g-row"><a class="btn btn-light" id="gSlideDown" download>📥 휴대폰에 저장 (인스타·블로그용)</a></div>
           </div>
-          <p class="g-tip">시작 화면(상호) → 사진마다 천천히 확대 → 끝 화면(전화번호)으로 자동 구성됩니다. 만드는 동안 화면을 켜 두세요.</p>
+          <p class="g-tip">시작 화면(상호) → 사진마다 천천히 확대 → 끝 화면(전화번호)으로 자동 구성되고, 배경 음악이 함께 들어갑니다. 만드는 동안 화면을 켜 두세요.</p>
         </div>
 
         <label class="g-check"><input type="checkbox" id="gPub" checked /> 홈페이지 갤러리에 바로 공개</label>
@@ -149,6 +151,64 @@
       if (m === 'video') $('gVideoNo').hidden = ok;
       if (!ok && m === 'slideshow') toast('이 브라우저는 영상 만들기를 지원하지 않습니다. 크롬이나 최신 사파리를 사용해 주세요.');
     }
+  }
+
+  // 배경 음악 고르기 (짧은 영상 V / 홍보영상 S 공용)
+  const musicFiles = { V: null, S: null };
+  let musicPlay = null;
+  const musicPicker = sfx => `
+          <div class="g-music">
+            <label>🎵 배경 음악<select class="field-in" id="gMusic${sfx}">
+              <option value="auto" selected>자동 (분야에 맞게)</option>
+              <option value="bright">밝고 경쾌하게</option>
+              <option value="warm">따뜻하고 잔잔하게</option>
+              <option value="power">힘차게 (현장 작업)</option>
+              <option value="piano">피아노처럼 차분하게</option>
+              <option value="none">음악 없음</option>
+              <option value="file">내 음악 파일 고르기…</option>
+            </select></label>
+            <button type="button" class="btn btn-light g-mprev" data-s="${sfx}">▶ 미리 듣기</button>
+            <input type="file" id="gMusicFile${sfx}" accept="audio/*" hidden />
+            <p class="g-mfile" id="gMusicName${sfx}" hidden></p>
+          </div>`;
+  function musicOpt(sfx, category) {
+    const v = $('gMusic' + sfx).value;
+    if (v === 'file') { if (!musicFiles[sfx]) throw new Error('배경 음악 파일을 골라 주세요'); return musicFiles[sfx]; }
+    return MediaTools.musicFor(v, category);
+  }
+  function stopMusicPreview() {
+    if (musicPlay) { musicPlay.stop(); musicPlay = null; }
+    document.querySelectorAll('.g-mprev').forEach(b => { b.textContent = '▶ 미리 듣기'; });
+  }
+  async function toggleMusicPreview(btn) {
+    const sfx = btn.dataset.s;
+    if (musicPlay) { const same = musicPlay.sfx === sfx; stopMusicPreview(); if (same) return; }
+    let opt;
+    try { opt = musicOpt(sfx, $('gCat').value); } catch (err) { toast(err.message); return; }
+    if (opt === 'none') { toast('음악 없음으로 선택되어 있어요'); return; }
+    btn.textContent = '…';
+    try {
+      const h = await MediaTools.previewMusic(opt, 12);
+      musicPlay = { stop: h.stop, sfx }; btn.textContent = '■ 멈추기';
+      if (h.ended) h.ended.then(() => { if (musicPlay && musicPlay.stop === h.stop) stopMusicPreview(); });
+    } catch (err) { btn.textContent = '▶ 미리 듣기'; toast(err.message); }
+  }
+  function bindMusic(sfx, onChange) {
+    $('gMusic' + sfx).addEventListener('change', e => {
+      stopMusicPreview();
+      if (e.target.value === 'file') $('gMusicFile' + sfx).click();
+      else { $('gMusicName' + sfx).hidden = true; }
+      if (onChange) onChange();
+    });
+    $('gMusicFile' + sfx).addEventListener('change', e => {
+      const f = e.target.files[0]; e.target.value = '';
+      if (!f) { if (!musicFiles[sfx]) $('gMusic' + sfx).value = 'auto'; return; }
+      musicFiles[sfx] = f;
+      const n = $('gMusicName' + sfx);
+      n.innerHTML = '🎵 ' + esc(f.name) + '<br><small>⚠️ 가요·유행곡처럼 저작권이 있는 음악은 쓰면 안 됩니다. 유튜브 오디오 보관함 등 무료 음악만 사용하세요.</small>';
+      n.hidden = false;
+      if (onChange) onChange();
+    });
   }
 
   /* ---------------- 이벤트 ---------------- */
@@ -202,6 +262,9 @@
       slideResult = null; $('gSlideOut').hidden = true; setMode('slideshow'); drawSlides();
     });
     ['gOrient', 'gPer'].forEach(id => $(id).addEventListener('change', () => { slideResult = null; $('gSlideOut').hidden = true; setMode('slideshow'); }));
+    bindMusic('V');
+    bindMusic('S', () => { if (slideResult) { slideResult = null; $('gSlideOut').hidden = true; setMode('slideshow'); } });
+    document.querySelectorAll('.g-mprev').forEach(b => b.addEventListener('click', () => toggleMusicPreview(b)));
 
     $('gSubmit').addEventListener('click', submit);
     $('gListCat').addEventListener('change', e => { listCat = e.target.value; drawList(); });
@@ -269,6 +332,7 @@
   async function submit() {
     if (busy) return;
     const base = common();
+    stopMusicPreview();
     setBusy(true);
     try {
       if (mode === 'photo') {
@@ -303,7 +367,7 @@
       } else if (mode === 'video') {
         if (!video) throw new Error('영상을 선택해 주세요');
         const out = await MediaTools.processVideo(video.file, {
-          start: +$('gStart').value, duration: +$('gLen').value,
+          start: +$('gStart').value, duration: +$('gLen').value, music: musicOpt('V', base.category),
           onProgress: p => progress(p * 0.85, `자동 편집 중… ${Math.round(p * 100)}% (화면을 켜 두세요)`)
         });
         progress(0.9, `올리는 중… (${(out.blob.size / 1048576).toFixed(1)}MB)`);
@@ -321,7 +385,7 @@
         if (!slideResult) {
           if (slides.length < 2) throw new Error('사진을 2장 이상 선택해 주세요');
           const out = await MediaTools.photosToVideo(slides.map(s => ({ file: s.file, label: base.caption || '' })), {
-            orientation: $('gOrient').value, perPhoto: +$('gPer').value,
+            orientation: $('gOrient').value, perPhoto: +$('gPer').value, music: musicOpt('S', base.category),
             subtitle: (base.caption || CATS[base.category] + ' 현장'),
             onProgress: p => progress(p, `홍보영상 만드는 중… ${Math.round(p * 100)}% (화면을 켜 두세요)`)
           });

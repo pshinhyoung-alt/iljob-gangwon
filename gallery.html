@@ -213,7 +213,7 @@
     // ---------- 크게 보기 ----------
     function stage(it) {
       if (it.kind === 'youtube') return `<iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(it.youtube_id)}?autoplay=1&rel=0&playsinline=1" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen title="${esc(it.caption || '현장 영상')}"></iframe>`;
-      if (it.kind === 'video') return `<video src="${esc(fileUrl(it.media_path))}" poster="${esc(fileUrl(it.thumb_path))}" controls autoplay muted playsinline></video>`;
+      if (it.kind === 'video') return `<video src="${esc(fileUrl(it.media_path))}" poster="${esc(fileUrl(it.thumb_path))}" controls playsinline></video>`;
       if (it.kind === 'beforeafter') return `<div class="ba" id="ba"><img src="${esc(fileUrl(it.media_path))}" alt="작업 전" /><div class="after" id="baAfter"><img src="${esc(fileUrl(it.after_path))}" alt="작업 후" id="baImg" /></div><div class="bar" id="baBar"><span class="knob">⇆</span></div><span class="lbl l">작업 전</span><span class="lbl r">작업 후</span></div>`;
       return `<img src="${esc(fileUrl(it.media_path))}" alt="${esc(it.caption || '현장 사진')}" />`;
     }
@@ -225,6 +225,9 @@
       $('lbP').hidden = i === 0; $('lbN').hidden = i >= L.length - 1;
       $('lb').classList.add('open'); document.body.style.overflow = 'hidden';
       if (it.kind === 'beforeafter') setupBA();
+      // 영상: 배경 음악과 함께 재생 (브라우저가 막으면 소리 끄고 재생)
+      const v = $('lbStage').querySelector('video');
+      if (v) v.play().catch(() => { v.muted = true; v.play().catch(() => {}); });
     }
     function close() { $('lb').classList.remove('open'); $('lbStage').innerHTML = ''; document.body.style.overflow = ''; }
     $('lbX').addEventListener('click', close);
