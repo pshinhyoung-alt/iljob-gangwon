@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>개인정보처리방침 | 일잡코리아 강원본부</title>
+  <meta name="description" content="일잡코리아 강원본부 개인정보처리방침" />
+  <meta name="theme-color" content="#0a1330" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <style>
+    :root { --navy: #0a1330; --blue: #2f6bff; --amber: #ffb020; --ink: #0f172a; --sub: #5a6478; --line: #e6e9f0; --bg: #f7f8fb; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Pretendard', -apple-system, 'Malgun Gothic', sans-serif; color: var(--ink); background: var(--bg); line-height: 1.75; word-break: keep-all; -webkit-font-smoothing: antialiased; }
+    a { color: var(--blue); }
+    .top { background: var(--navy); color: #fff; }
+    .top .in { max-width: 860px; margin: 0 auto; padding: 0 20px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: #fff; text-decoration: none; }
+    .brand .mk { width: 34px; height: 34px; border-radius: 10px; background: var(--blue); display: grid; place-items: center; font-weight: 900; }
+    .top .back { color: #fff; text-decoration: none; font-weight: 700; font-size: .92rem; padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,.1); }
+    main { max-width: 860px; margin: 0 auto; padding: 44px 20px 80px; }
+    h1 { font-size: clamp(1.7rem, 4vw, 2.3rem); font-weight: 800; letter-spacing: -0.03em; }
+    .lead { color: var(--sub); margin: 10px 0 26px; }
+    .toc { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 20px 24px; margin-bottom: 30px; }
+    .toc strong { display: block; margin-bottom: 8px; }
+    .toc ol { margin-left: 20px; columns: 2; column-gap: 30px; font-size: .93rem; }
+    .toc a { color: var(--ink); text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+    section { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 26px 26px 22px; margin-bottom: 16px; scroll-margin-top: 20px; }
+    h2 { font-size: 1.15rem; font-weight: 800; margin-bottom: 10px; letter-spacing: -0.02em; }
+    p + p, p + ul, ul + p, table + p { margin-top: 8px; }
+    ul { margin-left: 20px; }
+    li + li { margin-top: 4px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: .92rem; }
+    th, td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { background: #f3f5fa; font-weight: 700; white-space: nowrap; }
+    .note { font-size: .88rem; color: var(--sub); }
+    .contact { display: grid; grid-template-columns: 120px 1fr; gap: 6px 14px; margin-top: 8px; }
+    .contact dt { font-weight: 700; color: var(--sub); }
+    footer { text-align: center; color: var(--sub); font-size: .88rem; padding: 0 20px 40px; }
+    @media (max-width: 640px) {
+      .toc ol { columns: 1; }
+      section { padding: 22px 18px 18px; }
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tr { border: 1px solid var(--line); border-radius: 10px; margin-bottom: 8px; overflow: hidden; }
+      td { border: 0; border-bottom: 1px solid var(--line); }
+      td:last-child { border-bottom: 0; }
+      td::before { content: attr(data-th); display: block; font-weight: 700; color: var(--sub); font-size: .82rem; }
+    }
+    @media print { .top, .toc, footer { display: none; } section { break-inside: avoid; border: 0; padding: 10px 0; } }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="in">
+      <a class="brand" href="./"><span class="mk">일</span>일잡코리아 강원본부</a>
+      <a class="back" href="./">← 홈페이지로</a>
+    </div>
+  </header>
+
+  <main>
+    <h1>개인정보처리방침</h1>
+    <p class="lead">일잡코리아 강원본부(이하 "회사")는 「개인정보 보호법」에 따라 이용자의 개인정보를 보호하고 관련 고충을 신속하고 원활하게 처리하기 위하여 다음과 같이 개인정보처리방침을 수립·공개합니다.</p>
+
+    <nav class="toc" aria-label="목차">
+      <strong>목차</strong>
+      <ol>
+        <li><a href="#p1">처리 목적</a></li>
+        <li><a href="#p2">처리하는 개인정보 항목</a></li>
+        <li><a href="#p3">보유 및 이용 기간</a></li>
+        <li><a href="#p4">제3자 제공</a></li>
+        <li><a href="#p5">처리 위탁</a></li>
+        <li><a href="#p6">파기 절차 및 방법</a></li>
+        <li><a href="#p7">정보주체의 권리와 행사 방법</a></li>
+        <li><a href="#p8">안전성 확보 조치</a></li>
+        <li><a href="#p9">자동 수집 장치</a></li>
+        <li><a href="#p10">개인정보 보호책임자</a></li>
+        <li><a href="#p11">권익침해 구제 방법</a></li>
+        <li><a href="#p12">방침의 변경</a></li>
+      </ol>
+    </nav>
+
+    <section id="p1">
+      <h2>1. 개인정보의 처리 목적</h2>
+      <p>회사는 다음 목적을 위하여 개인정보를 처리하며, 목적 이외의 용도로는 이용하지 않습니다. 목적이 변경되는 경우 별도의 동의를 받겠습니다.</p>
+      <ul>
+        <li><b>인력 요청 상담</b>: 구인처(사업주·개인)의 인력 요청 접수, 상담 및 연락, 인력 배정</li>
+        <li><b>구직 상담</b>: 구직자의 구직 신청 접수, 상담 및 연락, 희망 조건에 맞는 일자리 연결</li>
+        <li><b>문자·카카오톡·기타 문의 응대</b>: 문의 접수 및 답변</li>
+      </ul>
+    </section>
+
+    <section id="p2">
+      <h2>2. 처리하는 개인정보 항목</h2>
+      <table>
+        <thead><tr><th>구분</th><th>필수 항목</th><th>선택 항목</th></tr></thead>
+        <tbody>
+          <tr><td data-th="구분">인력 요청</td><td data-th="필수 항목">업체명 또는 성함, 연락처, 필요 분야, 필요 인원, 근무 시작일, 작업 장소</td><td data-th="선택 항목">근무 기간, 작업 내용·요청 사항</td></tr>
+          <tr><td data-th="구분">구직 상담</td><td data-th="필수 항목">성함, 연락처, 희망 분야</td><td data-th="선택 항목">내·외국인 구분, 연령대, 희망 근무 지역, 희망 근무 형태, 경력·자격증, 연락 가능 시간</td></tr>
+          <tr><td data-th="구분">문자·카카오톡 상담</td><td data-th="필수 항목">답변 받을 연락처</td><td data-th="선택 항목">성함(업체명), 문의 내용에 적은 정보</td></tr>
+        </tbody>
+      </table>
+      <p class="note">※ 회사는 주민등록번호·외국인등록번호 등 고유식별정보와 건강정보 등 민감정보를 홈페이지로 수집하지 않습니다. 근로 계약 등 법령상 필요한 경우에는 방문 시 별도로 확인합니다.</p>
+      <p class="note">※ 회사는 만 14세 미만 아동의 개인정보를 수집하지 않습니다.</p>
+    </section>
+
+    <section id="p3">
+      <h2>3. 개인정보의 보유 및 이용 기간</h2>
+      <ul>
+        <li>상담 완료(매칭 완료 또는 상담 종료) 후 <b>1년</b>간 보관 후 파기합니다.</li>
+        <li>정보주체가 삭제를 요청하는 경우 지체 없이 파기합니다.</li>
+        <li>다만, 관계 법령에 따라 보존할 필요가 있는 경우 해당 법령에서 정한 기간 동안 보관합니다.</li>
+      </ul>
+    </section>
+
+    <section id="p4">
+      <h2>4. 개인정보의 제3자 제공</h2>
+      <p>회사는 정보주체의 개인정보를 제1항의 목적 범위 내에서만 처리하며, 정보주체의 동의 또는 법률의 특별한 규정 등 「개인정보 보호법」 제17조 및 제18조에 해당하는 경우에만 제3자에게 제공합니다.</p>
+      <p>일자리 연결을 위하여 구인처에 구직자의 성함·연락처 등 최소한의 정보를 제공해야 하는 경우, <b>제공받는 자, 제공 항목, 이용 목적, 보유 기간을 알리고 사전에 본인의 동의</b>를 받습니다.</p>
+    </section>
+
+    <section id="p5">
+      <h2>5. 개인정보 처리의 위탁</h2>
+      <p>회사는 원활한 업무 처리를 위하여 다음과 같이 개인정보 처리 업무를 위탁하고 있습니다.</p>
+      <table>
+        <thead><tr><th>수탁자</th><th>위탁 업무</th><th>보관 위치</th></tr></thead>
+        <tbody>
+          <tr><td data-th="수탁자">Supabase, Inc.</td><td data-th="위탁 업무">접수 정보 저장을 위한 데이터베이스 운영</td><td data-th="보관 위치">대한민국 서울 (Amazon Web Services 서울 리전)</td></tr>
+        </tbody>
+      </table>
+      <p class="note">※ 홈페이지는 GitHub Pages(GitHub, Inc.)를 통해 제공되며, 접수 정보는 GitHub 에 저장되지 않습니다. 문자 상담은 이용자의 휴대폰 문자로 회사 휴대폰에 직접 전송됩니다.</p>
+      <p>위탁 업무의 내용이나 수탁자가 변경될 경우 이 개인정보처리방침을 통해 공개하겠습니다.</p>
+    </section>
+
+    <section id="p6">
+      <h2>6. 개인정보의 파기 절차 및 방법</h2>
+      <ul>
+        <li><b>파기 절차</b>: 보유 기간이 지나거나 처리 목적이 달성된 개인정보는 지체 없이 파기합니다.</li>
+        <li><b>파기 방법</b>: 전자적 파일 형태의 정보는 복구할 수 없는 방법으로 삭제하며, 출력물 등 종이에 기록된 정보는 분쇄하거나 소각합니다.</li>
+      </ul>
+    </section>
+
+    <section id="p7">
+      <h2>7. 정보주체의 권리와 그 행사 방법</h2>
+      <p>정보주체는 회사에 대하여 언제든지 다음의 권리를 행사할 수 있습니다.</p>
+      <ul>
+        <li>개인정보 열람 요구</li>
+        <li>오류 등이 있을 경우 정정 요구</li>
+        <li>삭제 요구</li>
+        <li>처리 정지 요구 및 동의 철회</li>
+      </ul>
+      <p>권리 행사는 전화(033-731-5282) 또는 방문을 통하여 하실 수 있으며, 회사는 본인 확인 후 지체 없이 조치하겠습니다. 법정대리인이나 위임을 받은 자를 통하여도 하실 수 있습니다.</p>
+    </section>
+
+    <section id="p8">
+      <h2>8. 개인정보의 안전성 확보 조치</h2>
+      <ul>
+        <li><b>접근 통제</b>: 접수 정보는 로그인한 관리자 계정만 열람할 수 있으며, 홈페이지 방문자는 접수만 가능하고 열람할 수 없도록 데이터베이스 보안 규칙을 적용하고 있습니다.</li>
+        <li><b>전송 구간 암호화</b>: 홈페이지와 데이터베이스 사이의 모든 통신은 암호화(HTTPS)되어 전송됩니다.</li>
+        <li><b>관리자 최소화</b>: 개인정보를 처리하는 관리자를 필요한 인원으로 최소화하고 관리자별 계정을 사용합니다.</li>
+      </ul>
+    </section>
+
+    <section id="p9">
+      <h2>9. 개인정보 자동 수집 장치의 설치·운영 및 거부</h2>
+      <p>회사는 이용자를 추적하거나 광고에 활용하는 쿠키·분석 도구를 사용하지 않습니다.</p>
+      <p>다만, 홈페이지 기능을 위해 이용자의 브라우저 저장공간(로컬 스토리지)에 다음 정보를 저장할 수 있습니다. 이 정보는 회사로 전송되지 않으며, 브라우저 설정에서 언제든지 삭제할 수 있습니다.</p>
+      <ul>
+        <li>앱 설치 안내 닫기 여부</li>
+        <li>네트워크 오류로 전송되지 못한 문의 내용(다음 방문 시 자동 재전송 후 삭제, 최대 3일 보관)</li>
+      </ul>
+      <p class="note">※ 오시는 길의 지도는 Google 지도 서비스를 통해 표시되며, 지도 이용 시 Google 의 개인정보처리방침이 적용됩니다.</p>
+    </section>
+
+    <section id="p10">
+      <h2>10. 개인정보 보호책임자</h2>
+      <p>회사는 개인정보 처리에 관한 업무를 총괄하여 책임지고, 개인정보 처리와 관련한 정보주체의 불만 처리 및 피해 구제를 위하여 아래와 같이 개인정보 보호책임자를 지정하고 있습니다.</p>
+      <dl class="contact">
+        <dt>성명</dt><dd>박신형 (대표)</dd>
+        <dt>연락처</dt><dd><a href="tel:0337315282">033-731-5282</a></dd>
+        <dt>주소</dt><dd>강원특별자치도 원주시 무실로 58</dd>
+      </dl>
+    </section>
+
+    <section id="p11">
+      <h2>11. 권익침해 구제 방법</h2>
+      <p>개인정보 침해로 인한 구제를 받기 위하여 아래 기관에 분쟁 해결이나 상담 등을 신청할 수 있습니다.</p>
+      <ul>
+        <li>개인정보분쟁조정위원회: (국번없이) 1833-6972 · <a href="https://www.kopico.go.kr" target="_blank" rel="noopener">www.kopico.go.kr</a></li>
+        <li>개인정보침해신고센터: (국번없이) 118 · <a href="https://privacy.kisa.or.kr" target="_blank" rel="noopener">privacy.kisa.or.kr</a></li>
+        <li>대검찰청: (국번없이) 1301 · <a href="https://www.spo.go.kr" target="_blank" rel="noopener">www.spo.go.kr</a></li>
+        <li>경찰청: (국번없이) 182 · <a href="https://ecrm.police.go.kr" target="_blank" rel="noopener">ecrm.police.go.kr</a></li>
+      </ul>
+    </section>
+
+    <section id="p12">
+      <h2>12. 개인정보처리방침의 변경</h2>
+      <p>이 개인정보처리방침은 <b>2026년 11월 9일</b>부터 적용됩니다. 내용이 추가·삭제·수정되는 경우 시행 7일 전부터 홈페이지를 통해 알리겠습니다.</p>
+    </section>
+  </main>
+
+  <footer>© 2026 일잡코리아 강원본부 · <a href="./">홈페이지로 돌아가기</a></footer>
+</body>
+</html>
