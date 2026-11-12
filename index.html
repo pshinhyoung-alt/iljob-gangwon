@@ -1525,14 +1525,19 @@
        ========================================================= */
     const DB = window.ILJOB_CONFIG || {};
     const DB_READY = !!(DB.SUPABASE_URL && DB.SUPABASE_ANON_KEY);
+    // 접수(인력 요청·구직·문자·카톡)는 인력배치 프로그램의 접수함으로 보낼 수 있음.
+    // config.js 에 INQUIRY_URL · INQUIRY_ANON_KEY 가 있으면 그쪽으로, 비어 있으면 기존 연결로 보냄.
+    // (갤러리 등 나머지 기능은 기존 연결을 그대로 사용)
+    const INQ_URL = DB.INQUIRY_URL || DB.SUPABASE_URL;
+    const INQ_KEY = DB.INQUIRY_ANON_KEY || DB.SUPABASE_ANON_KEY;
 
     // 모든 접수(양식·문자·카톡)를 같은 항목 이름으로 통일
     const FIELD_MAP = { company: 'name', startDate: 'schedule', fields: 'field', area: 'location', experience: 'details' };
 
     async function sendRecord(type, channel, rec) {
-      const res = await fetch(DB.SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/rpc/submit_inquiry', {
+      const res = await fetch(INQ_URL.replace(/\/$/, '') + '/rest/v1/rpc/submit_inquiry', {
         method: 'POST',
-        headers: { apikey: DB.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + DB.SUPABASE_ANON_KEY, 'Content-Type': 'application/json' },
+        headers: { apikey: INQ_KEY, Authorization: 'Bearer ' + INQ_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ p: Object.assign({}, rec, { type, channel }) })
       });
       const data = await res.json().catch(() => ({}));
