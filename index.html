@@ -1541,14 +1541,26 @@
     // 모든 접수(양식·문자·카톡)를 같은 항목 이름으로 통일
     const FIELD_MAP = { company: 'name', startDate: 'schedule', fields: 'field', area: 'location', experience: 'details' };
 
-    async function sendRecord(type, channel, rec) {
-      const res = await fetch(INQ_URL.replace(/\/$/, '') + '/rest/v1/rpc/submit_inquiry', {
+    // 접수 한 건을 한 곳(url)에 저장. 실패하면 오류를 던짐
+    async function postInquiry(url, key, body) {
+      const res = await fetch(url.replace(/\/$/, '') + '/rest/v1/rpc/submit_inquiry', {
         method: 'POST',
-        headers: { apikey: INQ_KEY, Authorization: 'Bearer ' + INQ_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ p: Object.assign({}, rec, { type, channel }) })
+        headers: { apikey: key, Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },
+        body
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.ok) throw new Error(data.message || data.error || 'submit_failed');
+      return data;   // { ok, receipt_no, merged }
+    }
+
+    async function sendRecord(type, channel, rec) {
+      const body = JSON.stringify({ p: Object.assign({}, rec, { type, channel }) });
+      const data = await postInquiry(INQ_URL, INQ_KEY, body);   // 손님에게 보이는 결과는 이쪽(인력배치 프로그램 접수함)
+      // 옛 관리자 페이지(admin.html)에도 같은 접수를 복사해 둠. config.js 의 INQUIRY_COPY_TO_OLD 로 켜고 끔.
+      // 복사가 실패해도 손님 화면·접수에는 영향 없음 (재전송도 하지 않음)
+      if (DB.INQUIRY_COPY_TO_OLD && INQ_URL !== DB.SUPABASE_URL) {
+        postInquiry(DB.SUPABASE_URL, DB.SUPABASE_ANON_KEY, body).catch(() => {});
+      }
       return data;   // { ok, receipt_no, merged }
     }
 
