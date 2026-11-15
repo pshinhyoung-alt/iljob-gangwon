@@ -729,6 +729,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" defer></script>
   <script src="config.js"></script>
+  <script src="site-info.js"></script>
 </head>
 <body>
 
@@ -1039,6 +1040,10 @@
               <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg></span>
               <span><small>서비스 지역</small><strong>원주 및 강원 전 지역</strong></span>
             </div>
+            <div id="hoursRow" style="display:none">
+              <span class="ii"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></span>
+              <span><small>운영 시간</small><strong id="hoursVal"></strong></span>
+            </div>
           </div>
           <div class="maplinks">
             <a href="https://map.naver.com/p/search/%EA%B0%95%EC%9B%90%ED%8A%B9%EB%B3%84%EC%9E%90%EC%B9%98%EB%8F%84%20%EC%9B%90%EC%A3%BC%EC%8B%9C%20%EB%AC%B4%EC%8B%A4%EB%A1%9C%2058" target="_blank" rel="noopener"><i style="background:#03c75a"></i>네이버</a>
@@ -1323,18 +1328,20 @@
        비어 있으면 홈페이지에 표시되지 않습니다.
        예) bizNo: "123-45-67890"
        ========================================================= */
-    const BUSINESS_INFO = {
-      bizNo: "",   // 사업자등록번호
-      jobNo: ""    // 직업소개사업 등록번호
-    };
-
+    /* 이제 관리자 페이지 [🏢 홈페이지 정보] 에서 입력합니다. (site-info.js 가 불러옴) */
+    const SITE_NOW = () => window.SITE || window.SITE_DEFAULTS || {};
     (function () {
-      const parts = [];
-      if (BUSINESS_INFO.bizNo.trim()) parts.push('사업자등록번호 : ' + BUSINESS_INFO.bizNo.trim());
-      if (BUSINESS_INFO.jobNo.trim()) parts.push('직업소개사업 등록번호 : ' + BUSINESS_INFO.jobNo.trim());
-      const el = document.getElementById('reg-info');
-      if (parts.length) el.innerHTML = parts.join(' &nbsp;|&nbsp; ');
-      else el.remove();
+      function render() {
+        const s = SITE_NOW();
+        const parts = [];
+        if (s.biz_no) parts.push('사업자등록번호 : ' + s.biz_no);
+        if (s.job_no) parts.push('직업소개사업 등록번호 : ' + s.job_no);
+        const el = document.getElementById('reg-info');
+        el.textContent = parts.join(' | ');
+        el.hidden = !parts.length;
+      }
+      render();
+      document.addEventListener('siteinfo', render);
     })();
 
     document.getElementById('year').textContent = new Date().getFullYear();
@@ -1633,7 +1640,7 @@
           if (form.elements.website.value) return; // 스팸 로봇 차단
 
           if (!DB_READY) {
-            msgEl.textContent = '온라인 접수 연결 준비 중입니다. 전화(033-731-5282)로 문의해 주세요.';
+            msgEl.textContent = '온라인 접수 연결 준비 중입니다. 전화(' + SITE_NOW().phone + ')로 문의해 주세요.';
             return;
           }
           const rec = {};
@@ -1658,7 +1665,7 @@
             showPane('done');
             modal.querySelector('[data-close]').focus();
           } catch (err) {
-            msgEl.textContent = '전송에 실패했습니다. 인터넷 연결을 확인하시거나 전화(033-731-5282)로 문의해 주세요.';
+            msgEl.textContent = '전송에 실패했습니다. 인터넷 연결을 확인하시거나 전화(' + SITE_NOW().phone + ')로 문의해 주세요.';
           } finally {
             btn.disabled = false; btn.textContent = label;
           }
@@ -1702,25 +1709,24 @@
       modal.querySelectorAll('[data-form]').forEach(b => b.addEventListener('click', () => close(true)));
 
       document.getElementById('copyNum').addEventListener('click', async () => {
-        const num = '033-731-5282';
+        const num = SITE_NOW().phone;
         let ok = false;
         try { await navigator.clipboard.writeText(num); ok = true; } catch (_) {
           const t = document.createElement('textarea'); t.value = num; document.body.appendChild(t);
           t.select(); try { ok = document.execCommand('copy'); } catch (__) {} t.remove();
         }
-        msg.textContent = ok ? '✔ 번호가 복사되었습니다.' : '번호: 033-731-5282';
+        msg.textContent = ok ? '✔ 번호가 복사되었습니다.' : '번호: ' + num;
       });
     })();
 
     /* =========================================================
        ★ 문자 · 카카오톡 상담 설정 ★
-       SMS_NUMBER       : 문자를 받을 번호 (숫자만). 일반전화(033)는 문자 수신이 안 될 수 있어
-                          휴대폰 번호 사용을 권장합니다. 자세한 내용: 안내 문서 참고
-       KAKAO_CHANNEL_URL: 카카오톡 채널 채팅 주소 (예: "http://pf.kakao.com/_abcde/chat")
-                          비워 두면 카카오톡 버튼이 숨겨집니다.
+       문자 받을 번호(sms): 숫자만. 일반전화(033)는 문자 수신이 안 될 수 있어 휴대폰 번호 사용을 권장합니다.
+       카카오톡 채널 주소(kakao_url): 예) "http://pf.kakao.com/_abcde/chat" — 비워 두면 카카오톡 버튼이 숨겨집니다.
        ========================================================= */
-    const SMS_NUMBER = "01084943848";  // 문자 받을 휴대폰 번호
-    const KAKAO_CHANNEL_URL = "";
+    // (이제 관리자 페이지 [🏢 홈페이지 정보] 에서 고칩니다. 아래는 불러오지 못했을 때의 기본값)
+    const smsNum = () => SITE_NOW().sms || "01084943848";
+    const kakaoUrl = () => SITE_NOW().kakao_url || "";
 
     (function messageButtons() {
       const modal = document.getElementById('msgModal');
@@ -1774,7 +1780,8 @@
         etc:      '[문의 - 홈페이지]\n성함: \n문의 내용: '
       };
 
-      if (!KAKAO_CHANNEL_URL) { kakaoBtn.remove(); document.getElementById('mBtns').classList.add('one'); }
+      const syncKakao = () => { const on = !!kakaoUrl(); kakaoBtn.style.display = on ? '' : 'none'; document.getElementById('mBtns').classList.toggle('one', !on); };
+      syncKakao(); document.addEventListener('siteinfo', syncKakao);
 
       const phoneOk = () => /^0\d{1,2}-?\d{3,4}-?\d{4}$/.test(phone.value.trim());
       function message() {
@@ -1792,14 +1799,14 @@
       function smsHref() {
         // iOS 와 안드로이드 모두 동작하는 형식: sms:번호?&body=내용
         const body = encodeURIComponent(message());
-        return 'sms:' + SMS_NUMBER + (isIOS ? '&' : '?') + 'body=' + body;
+        return 'sms:' + smsNum() + (isIOS ? '&' : '?') + 'body=' + body;
       }
       function renderQr() {
         if (!isDesktop() || typeof qrcode === 'undefined') { qrBox.innerHTML = ''; return; }
         try {
           qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
           const q = qrcode(0, 'L');
-          q.addData('SMSTO:' + SMS_NUMBER + ':' + message(), 'Byte');
+          q.addData('SMSTO:' + smsNum() + ':' + message(), 'Byte');
           q.make();
           qrBox.innerHTML = q.createSvgTag({ cellSize: 3, margin: 0, scalable: true });
         } catch (e) { qrBox.innerHTML = ''; }
@@ -1815,9 +1822,9 @@
         modal.querySelector('.sheet').classList.toggle('is-desktop', isDesktop());
         if (!edited) setTpl('employer'); else refresh();
         hint.innerHTML = isDesktop()
-          ? (KAKAO_CHANNEL_URL ? '<b>PC에서는 카카오톡 상담이 가장 편리합니다.</b> 문자는 아래 QR 코드를 휴대폰으로 찍어 보내 주세요.' : '문자는 아래 QR 코드를 휴대폰으로 찍어 보내 주세요.')
+          ? (kakaoUrl() ? '<b>PC에서는 카카오톡 상담이 가장 편리합니다.</b> 문자는 아래 QR 코드를 휴대폰으로 찍어 보내 주세요.' : '문자는 아래 QR 코드를 휴대폰으로 찍어 보내 주세요.')
           : '문자 보내기를 누르면 위 내용이 담긴 문자 작성 화면이 열립니다. 전송 버튼만 누르시면 됩니다.'
-            + (KAKAO_CHANNEL_URL ? ' 카카오톡 상담은 내용을 복사해 두었다가 붙여넣기 하시면 편합니다.' : '');
+            + (kakaoUrl() ? ' 카카오톡 상담은 내용을 복사해 두었다가 붙여넣기 하시면 편합니다.' : '');
         modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false');
         document.body.classList.add('lock');
         setTimeout(() => {
@@ -1862,7 +1869,7 @@
         record('카카오톡');
         // 카카오톡 채널은 미리 내용을 채울 수 없어 클립보드에 복사한 뒤 채팅창을 엽니다.
         try { await navigator.clipboard.writeText(message()); } catch (_) {}
-        window.open(KAKAO_CHANNEL_URL, '_blank', 'noopener');
+        window.open(kakaoUrl(), '_blank', 'noopener');
         hint.innerHTML = '<b>✔ 내용이 복사되었습니다.</b> 카카오톡 채팅창에 붙여넣기(길게 누르기 → 붙여넣기) 해 주세요.';
       });
       modal.querySelector('.close').addEventListener('click', close);
@@ -1927,7 +1934,7 @@
             + '<li>화면 아래쪽(아이패드는 위쪽) ' + ICON_SHARE + ' <b>공유</b> 버튼을 누르세요.</li>'
             + '<li>목록을 내려 ' + ICON_PLUS + ' <b>홈 화면에 추가</b>를 누르세요.</li>'
             + '<li>오른쪽 위 <b>추가</b>를 누르면 끝!</li>';
-          note.textContent = '홈 화면의 "일잡코리아" 아이콘을 누르면 앱처럼 열립니다.';
+          note.textContent = '홈 화면의 "' + SITE_NOW().brand + '" 아이콘을 누르면 앱처럼 열립니다.';
         } else {
           steps.innerHTML = '<li>브라우저 오른쪽 위(또는 아래) ' + ICON_DOTS + ' 메뉴를 누르세요.</li>'
             + '<li><b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 누르세요.</li>'

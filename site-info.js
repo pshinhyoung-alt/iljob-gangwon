@@ -1,0 +1,127 @@
+/* =========================================================
+   일잡코리아 - 홈페이지 기본 정보(상호·전화·주소·대표 등) 불러오기
+   관리자 페이지 [🏢 홈페이지 정보] 에서 고친 값을 Supabase 의 site_settings 표에서 읽어
+   페이지 안의 글자를 바꿔 줍니다. (HTML 안의 글자는 처음 기본값이고, 이 파일이 새 값으로 바꿈)
+   - 이전에 받은 값은 브라우저에 저장해 두었다가 먼저 보여 주고, 새 값이 오면 다시 바꿈
+   - 불러오지 못하면 기본값 그대로 보임 (홈페이지는 계속 정상 동작)
+   ========================================================= */
+(function () {
+  var DEFAULTS = {
+    brand: '일잡코리아', branch: '강원본부', ceo: '박신형',
+    phone: '033-731-5282', sms: '01084943848',
+    address: '강원특별자치도 원주시 무실로 58',
+    biz_no: '', job_no: '', kakao_url: '', hours: ''
+  };
+  var KEYS = Object.keys(DEFAULTS);
+  var CACHE = 'iljob_site_v1';
+  var ATTRS = ['href', 'src', 'title', 'alt', 'aria-label', 'content'];
+
+  var OPTIONAL = { branch: 1, biz_no: 1, job_no: 1, kakao_url: 1, hours: 1 };   // 비워 둘 수 있는 항목
+
+  function clean(src) {
+    var o = {};
+    KEYS.forEach(function (k) {
+      var v = src && typeof src[k] === 'string' ? src[k].trim() : null;
+      o[k] = v === null ? DEFAULTS[k] : (v === '' && !OPTIONAL[k] ? DEFAULTS[k] : v);
+    });
+    o.sms = o.sms.replace(/\D/g, '') || DEFAULTS.sms;
+    return o;
+  }
+
+  var cur = clean(null);
+  try { var c = JSON.parse(localStorage.getItem(CACHE) || 'null'); if (c) cur = clean(c); } catch (_) {}
+  var prev = clean(null);            // 지금 화면의 글자가 어떤 값으로 되어 있는지 (처음엔 기본값)
+
+  function digits(s) { return String(s).replace(/\D/g, ''); }
+  function shortAddr(a) { return a.replace(/^강원(특별자치)?도\s*/, ''); }
+  function full(o) { return (o.brand + ' ' + o.branch).trim(); }
+  function reEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+  // 바꿀 (이전 → 새) 목록. 한 번에 바꿔서 새 글자가 다시 바뀌는 일이 없게 함
+  function buildPairs(a, b) {
+    var list = [
+      [full(a), full(b)],
+      [a.branch, b.branch],
+      [a.brand, b.brand],
+      [a.phone, b.phone],
+      [digits(a.phone), digits(b.phone)],
+      [a.address, b.address],
+      [encodeURIComponent(a.address), encodeURIComponent(b.address)],
+      [shortAddr(a.address), shortAddr(b.address)],
+      [a.ceo, b.ceo]
+    ];
+    var map = {};
+    list.forEach(function (p) { if (p[0] && p[0] !== p[1] && p[0].length >= 2 && !(p[0] in map)) map[p[0]] = p[1]; });
+    var froms = Object.keys(map).sort(function (x, y) { return y.length - x.length; });
+    if (!froms.length) return null;
+    return { re: new RegExp(froms.map(reEsc).join('|'), 'g'), map: map };
+  }
+
+  function apply() {
+    var pairs = buildPairs(prev, cur);
+    if (pairs) {
+      var rep = function (s) { return s.replace(pairs.re, function (m) { return pairs.map[m]; }); };
+      if (document.title) document.title = rep(document.title);
+      var w = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT, {
+        acceptNode: function (n) {
+          var p = n.parentNode && n.parentNode.nodeName;
+          return /^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(p) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      var node, nodes = [];
+      while ((node = w.nextNode())) nodes.push(node);
+      nodes.forEach(function (t) { var v = rep(t.nodeValue); if (v !== t.nodeValue) t.nodeValue = v; });
+      document.querySelectorAll('[href],[src],[title],[alt],[aria-label],meta[content]').forEach(function (el) {
+        ATTRS.forEach(function (a) {
+          var v = el.getAttribute(a);
+          if (v) { var nv = rep(v); if (nv !== v) el.setAttribute(a, nv); }
+        });
+      });
+      if (prev.brand !== cur.brand) {
+        document.querySelectorAll('.logo-mark, .brand .mk').forEach(function (m) { m.textContent = cur.brand.charAt(0); });
+      }
+    }
+    // 운영 시간 (있을 때만 보임)
+    var hr = document.getElementById('hoursRow'), hv = document.getElementById('hoursVal');
+    if (hr && hv) { hv.textContent = cur.hours; hr.style.display = cur.hours ? '' : 'none'; }
+    prev = JSON.parse(JSON.stringify(cur));
+  }
+
+  var ready = function () { apply(); };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready); else ready();
+
+  // 다른 코드가 쓸 수 있는 현재 값
+  window.SITE = cur;
+  window.SITE_DEFAULTS = DEFAULTS;
+
+  // 새 값 받아오기 (anon 읽기 전용)
+  function refresh() {
+    var cfg = window.ILJOB_CONFIG || {};
+    if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY || !window.fetch) return;
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 8000) : null;
+    fetch(cfg.SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/site_settings?id=eq.1&select=' + KEYS.join(','), {
+      headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + cfg.SUPABASE_ANON_KEY },
+      signal: ctl ? ctl.signal : undefined
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (rows) {
+      if (timer) clearTimeout(timer);
+      if (!rows || !rows[0]) return;
+      var next = clean(rows[0]);
+      try { localStorage.setItem(CACHE, JSON.stringify(next)); } catch (_) {}
+      cur = next; window.SITE = cur;
+      if (document.readyState !== 'loading') apply();
+      document.dispatchEvent(new CustomEvent('siteinfo', { detail: cur }));
+    }).catch(function () {});
+  }
+  refresh();
+
+  // 관리자 페이지에서 저장한 직후 현재 화면에도 반영할 때 사용
+  window.SiteInfo = {
+    set: function (row) {
+      var next = clean(row);
+      try { localStorage.setItem(CACHE, JSON.stringify(next)); } catch (_) {}
+      cur = next; window.SITE = cur; apply();
+      document.dispatchEvent(new CustomEvent('siteinfo', { detail: cur }));
+    }
+  };
+})();

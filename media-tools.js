@@ -8,7 +8,14 @@
      - musicBuffer / previewMusic : 저작권 걱정 없는 배경 음악을 브라우저에서 직접 작곡
    ========================================================= */
 (function () {
-  const BRAND = { name: '일잡코리아 강원본부', short: '일잡코리아', phone: '033-731-5282', slogan: '필요한 일손, 당일 매칭' };
+  // 영상 끝 화면·하단 띠에 들어가는 상호·전화번호 (관리자 페이지 [홈페이지 정보] 값을 따라감)
+  const SITE = () => window.SITE || {};
+  const BRAND = {
+    get name() { return ((SITE().brand || '일잡코리아') + ' ' + (SITE().branch === undefined ? '강원본부' : SITE().branch)).trim(); },
+    get short() { return SITE().brand || '일잡코리아'; },
+    get phone() { return SITE().phone || '033-731-5282'; },
+    slogan: '필요한 일손, 당일 매칭'
+  };
   const NAVY = '#0a1330', BLUE = '#2f6bff', AMBER = '#ffb020';
   const FONT = '"Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
 

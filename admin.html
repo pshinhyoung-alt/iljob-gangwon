@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
+  <script src="site-info.js"></script>
   <script src="media-tools.js" defer></script>
   <script src="admin-gallery.js" defer></script>
   <style>
@@ -332,7 +333,7 @@
     </header>
 
     <main class="wrap">
-      <div class="vtabs" id="vtabs"><button data-v="inq" class="on">📋 접수 관리</button><button data-v="gal">📷 현장 갤러리</button></div>
+      <div class="vtabs" id="vtabs"><button data-v="inq" class="on">📋 접수 관리</button><button data-v="gal">📷 현장 갤러리</button><button data-v="site">🏢 홈페이지 정보</button></div>
       <div id="inqView">
       <div class="stats">
         <button class="stat" data-quick="unread"><span class="lb"><i style="background:var(--red)"></i>확인 안 한 접수</span><b id="stUnread">0</b></button>
@@ -367,6 +368,47 @@
       <p class="foot-note" id="footNote"></p>
       </div>
       <div id="galView" hidden></div>
+      <div id="siteView" hidden>
+        <style>
+          .sitebox { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 22px; margin-top: 18px; max-width: 760px; }
+          .sitebox h2 { font-size: 1.15rem; font-weight: 800; margin-bottom: 4px; }
+          .sitebox p.hint { color: var(--sub); font-size: .88rem; margin-bottom: 14px; }
+          .sitebox label { display: block; font-weight: 700; font-size: .88rem; margin: 14px 0 6px; }
+          .sitebox label small { font-weight: 500; color: var(--sub); }
+          .sitebox .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+          @media (max-width: 640px) { .sitebox .two { grid-template-columns: 1fr; } }
+          .sitebox .acts { display: flex; gap: 10px; align-items: center; margin-top: 20px; flex-wrap: wrap; }
+          .sitebox .sec { margin-top: 22px; padding-top: 6px; border-top: 1px solid var(--line); font-weight: 800; }
+        </style>
+        <form class="sitebox" id="siteForm" autocomplete="off">
+          <h2>🏢 홈페이지 정보</h2>
+          <p class="hint">여기서 고치면 손님용 홈페이지(상호·전화·주소·대표 표시, 문자 상담 번호, 개인정보처리방침, 현장 갤러리)에 바로 반영됩니다. 저장 후 홈페이지를 새로 고쳐 확인하세요.</p>
+          <div class="two">
+            <div><label for="sBrand">상호 <small>(간판 이름)</small></label><input class="field-in" id="sBrand" maxlength="30" required></div>
+            <div><label for="sBranch">지점명 <small>(없으면 비워 두세요)</small></label><input class="field-in" id="sBranch" maxlength="30"></div>
+          </div>
+          <label for="sCeo">대표자</label><input class="field-in" id="sCeo" maxlength="30" required>
+          <label for="sAddr">주소</label><input class="field-in" id="sAddr" maxlength="120" required>
+          <div class="two">
+            <div><label for="sPhone">대표 전화 <small>(손님이 전화하는 번호)</small></label><input class="field-in" id="sPhone" inputmode="tel" maxlength="20" required placeholder="033-000-0000"></div>
+            <div><label for="sSms">문자 받을 번호 <small>(휴대폰 · 숫자만)</small></label><input class="field-in" id="sSms" inputmode="numeric" maxlength="13" required placeholder="01000000000"></div>
+          </div>
+          <label for="sHours">운영 시간 <small>(비워 두면 홈페이지에 표시하지 않음 · 예: 평일 06:00~18:00)</small></label><input class="field-in" id="sHours" maxlength="100">
+          <div class="sec">등록 정보 <small style="font-weight:500;color:var(--sub)">· 비워 두면 홈페이지에 표시하지 않습니다</small></div>
+          <div class="two">
+            <div><label for="sBiz">사업자등록번호</label><input class="field-in" id="sBiz" maxlength="30" placeholder="123-45-67890"></div>
+            <div><label for="sJob">직업소개사업 등록번호</label><input class="field-in" id="sJob" maxlength="40"></div>
+          </div>
+          <label for="sKakao">카카오톡 채널 채팅 주소 <small>(비워 두면 카카오톡 상담 버튼이 숨겨집니다 · 예: http://pf.kakao.com/_abcde/chat)</small></label><input class="field-in" id="sKakao" maxlength="200" inputmode="url">
+          <div class="err" id="siteErr"></div>
+          <div class="acts">
+            <button type="submit" class="btn btn-primary" id="siteSave">저장</button>
+            <button type="button" class="btn btn-light" id="siteReset">저장된 값으로 되돌리기</button>
+            <a class="btn btn-light" href="./" target="_blank" rel="noopener">홈페이지 열어 보기</a>
+          </div>
+          <p class="hint" style="margin-top:16px">※ 검색 결과·카카오톡 미리보기에 나오는 문구, 앱 설치 이름, 홈페이지 큰 그림(이미지) 속 글자는 이 화면으로 바뀌지 않습니다. 바꿔야 하면 말씀해 주세요.</p>
+        </form>
+      </div>
     </main>
   </div>
 
@@ -477,7 +519,8 @@
     $('vtabs').addEventListener('click', e => {
       const b = e.target.closest('[data-v]'); if (!b) return;
       $('vtabs').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-      $('inqView').hidden = b.dataset.v !== 'inq'; $('galView').hidden = b.dataset.v !== 'gal';
+      $('inqView').hidden = b.dataset.v !== 'inq'; $('galView').hidden = b.dataset.v !== 'gal'; $('siteView').hidden = b.dataset.v !== 'site';
+      if (b.dataset.v === 'site') loadSite();
       if (b.dataset.v === 'gal') {
         if (window.AdminGallery) window.AdminGallery.init({ sb, toast });
         else toast('갤러리 기능을 불러오는 중입니다. 잠시 후 다시 눌러 주세요.');
@@ -485,6 +528,38 @@
     });
 
     let all = [], filtered = [], current = null, mode = 'view', typeF = '', quickF = '', lastUnread = -1, pollTimer = null;
+
+    // ---------------- 홈페이지 정보 (상호·전화·주소·대표 등) ----------------
+    const SITE_IDS = { brand: 'sBrand', branch: 'sBranch', ceo: 'sCeo', address: 'sAddr', phone: 'sPhone', sms: 'sSms', hours: 'sHours', biz_no: 'sBiz', job_no: 'sJob', kakao_url: 'sKakao' };
+    async function loadSite() {
+      $('siteErr').textContent = '';
+      const { data, error } = await sb.from('site_settings').select('*').eq('id', 1).maybeSingle();
+      if (error) { $('siteErr').textContent = '불러오지 못했습니다. (db/site_settings.sql 을 Supabase 에서 아직 실행하지 않았다면 먼저 실행해 주세요.) ' + error.message; return; }
+      const row = data || window.SITE_DEFAULTS || {};
+      Object.keys(SITE_IDS).forEach(k => { $(SITE_IDS[k]).value = row[k] == null ? '' : row[k]; });
+    }
+    $('siteReset').addEventListener('click', loadSite);
+    $('siteForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const v = {};
+      Object.keys(SITE_IDS).forEach(k => { v[k] = $(SITE_IDS[k]).value.trim(); });
+      const err = m => { $('siteErr').textContent = m; };
+      err('');
+      if (!v.brand) return err('상호를 입력해 주세요.');
+      if (!v.ceo) return err('대표자를 입력해 주세요.');
+      if (v.address.length < 5) return err('주소를 정확히 입력해 주세요.');
+      if (!/^[0-9()\-\s]{5,20}$/.test(v.phone)) return err('대표 전화는 숫자와 - 만 입력해 주세요. (예: 033-000-0000)');
+      v.sms = v.sms.replace(/\D/g, '');
+      if (!/^[0-9]{9,11}$/.test(v.sms)) return err('문자 받을 번호는 숫자 9~11자리로 입력해 주세요. (예: 01012345678)');
+      if (v.kakao_url && !/^https?:\/\//i.test(v.kakao_url)) return err('카카오톡 채널 주소는 http:// 또는 https:// 로 시작해야 합니다.');
+      $('siteSave').disabled = true;
+      const { data, error } = await sb.from('site_settings').upsert({ id: 1, ...v, updated_at: new Date().toISOString() }).select().maybeSingle();
+      $('siteSave').disabled = false;
+      if (error) return err('저장하지 못했습니다: ' + error.message);
+      $('sSms').value = v.sms;
+      if (window.SiteInfo) window.SiteInfo.set(data || v);
+      toast('저장했습니다. 홈페이지를 새로 고쳐 확인해 보세요.');
+    });
 
     // ---------------- 로그인 ----------------
     async function enter(session) {
