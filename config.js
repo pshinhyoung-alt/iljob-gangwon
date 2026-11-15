@@ -16,7 +16,6 @@ window.ILJOB_CONFIG = {
   // 비워 두면 접수가 기존 연결(위 SUPABASE_URL)로 들어갑니다.
   // 시험이 끝난 뒤 아래 두 칸을 채우면 접수가 새 접수함으로 들어갑니다. (갤러리는 영향 없음)
   INQUIRY_URL: "https://ctdbehqjrpagxfhbmktx.supabase.co",
-  INQUIRY_ANON_KEY: "sb_publishable_BzoaNo6ZV2GV_U_rl0sbbQ_5FeyGd5c",
-  // true 로 두면 같은 접수가 옛 관리자 페이지(admin.html)에도 복사됩니다. 끄려면 false.
-  INQUIRY_COPY_TO_OLD: true
+  INQUIRY_ANON_KEY: "sb_publishable_BzoaNo6ZV2GV_U_rl0sbbQ_5FeyGd5c"
+  // 접수를 어느 쪽으로 받을지는 관리자 페이지 [🏢 홈페이지 정보] → "접수 받을 곳"에서 고릅니다.
 };

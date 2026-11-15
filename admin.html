@@ -288,14 +288,21 @@
   <span id="moveNoticeText"></span>
 </div>
 <script>
+  // 위쪽 안내 줄: [홈페이지 정보] 의 "접수 받을 곳" 선택에 따라 문구가 바뀜
   (function () {
     var c = window.ILJOB_CONFIG || {};
-    if (!c.INQUIRY_URL) return;
     var link = '<a href="https://pshinhyoung-alt.github.io/ilgam-baechi/inquiries.html" style="color:#2f5bea">인력배치 프로그램의 접수함</a>';
-    document.getElementById('moveNoticeText').innerHTML = c.INQUIRY_COPY_TO_OLD
-      ? '⚠ 접수 처리는 ' + link + '에서 하세요. 이 페이지에는 같은 접수가 복사되어 쌓이지만, 처리 상태·메모는 서로 연동되지 않습니다.'
-      : '⚠ 새 접수는 ' + link + '에서 확인합니다. 이 페이지에는 이전 접수만 남아 있습니다.';
-    document.getElementById('moveNotice').hidden = false;
+    function render() {
+      var t = (window.SITE && window.SITE.inquiry_target) || 'new';
+      var box = document.getElementById('moveNotice'), txt = document.getElementById('moveNoticeText');
+      if (!c.INQUIRY_URL || t === 'old') { box.hidden = true; return; }   // 접수 연결이 하나뿐이거나 이 페이지가 접수를 받는 중
+      txt.innerHTML = t === 'both'
+        ? '⚠ 접수 처리는 ' + link + '에서 하세요. 이 페이지에는 같은 접수가 복사되어 쌓이지만, 처리 상태·메모는 서로 연동되지 않습니다.'
+        : '⚠ 새 접수는 ' + link + '에서 확인합니다. 이 페이지에는 이전 접수만 남아 있습니다.';
+      box.hidden = false;
+    }
+    render();
+    document.addEventListener('siteinfo', render);
   })();
 </script>
 
@@ -404,7 +411,15 @@
             <div><label for="sSms">문자 받을 번호 <small>(휴대폰 · 숫자만)</small></label><input class="field-in" id="sSms" inputmode="numeric" maxlength="13" required placeholder="01000000000"></div>
           </div>
           <label for="sHours">운영 시간 <small>(비워 두면 홈페이지에 표시하지 않음 · 예: 평일 06:00~18:00)</small></label><input class="field-in" id="sHours" maxlength="100">
-          <div class="sec">등록 정보 <small style="font-weight:500;color:var(--sub)">· 비워 두면 홈페이지에 표시하지 않습니다</small></div>
+          <div class="sec">접수 받을 곳 <small style="font-weight:500;color:var(--sub)">· 손님이 홈페이지에서 보낸 인력 요청·구직·문자·카톡 접수가 쌓이는 곳</small></div>
+          <label for="sTarget">접수 받을 곳 선택</label>
+          <select class="field-in" id="sTarget">
+            <option value="new">인력배치 프로그램의 접수함만 (권장)</option>
+            <option value="old">이 관리자 페이지만 (인력배치 접수함에는 안 들어감)</option>
+            <option value="both">둘 다 (복사 · 처리 상태는 서로 연동되지 않음)</option>
+          </select>
+          <p class="hint" style="margin:6px 0 0">저장한 뒤 새로 접수되는 것부터 적용됩니다. 이미 접수된 것은 옮겨지지 않습니다. 홈페이지를 열어 둔 손님은 새로 고침하기 전까지 이전 선택으로 접수됩니다.</p>
+          <div class="sec">등록 정보<small style="font-weight:500;color:var(--sub)">· 비워 두면 홈페이지에 표시하지 않습니다</small></div>
           <div class="two">
             <div><label for="sBiz">사업자등록번호</label><input class="field-in" id="sBiz" maxlength="30" placeholder="123-45-67890"></div>
             <div><label for="sJob">직업소개사업 등록번호</label><input class="field-in" id="sJob" maxlength="40"></div>
@@ -540,13 +555,17 @@
     let all = [], filtered = [], current = null, mode = 'view', typeF = '', quickF = '', lastUnread = -1, pollTimer = null;
 
     // ---------------- 홈페이지 정보 (상호·전화·주소·대표 등) ----------------
-    const SITE_IDS = { brand: 'sBrand', branch: 'sBranch', ceo: 'sCeo', address: 'sAddr', phone: 'sPhone', sms: 'sSms', hours: 'sHours', biz_no: 'sBiz', job_no: 'sJob', kakao_url: 'sKakao' };
+    const SITE_IDS = { brand: 'sBrand', branch: 'sBranch', ceo: 'sCeo', address: 'sAddr', phone: 'sPhone', sms: 'sSms', hours: 'sHours', biz_no: 'sBiz', job_no: 'sJob', kakao_url: 'sKakao', inquiry_target: 'sTarget' };
+    let siteHasTarget = false;   // 설정 표에 "접수 받을 곳" 칸이 이미 있는지
     async function loadSite() {
       $('siteErr').textContent = '';
       const { data, error } = await sb.from('site_settings').select('*').eq('id', 1).maybeSingle();
       if (error) { $('siteErr').textContent = '불러오지 못했습니다. (db/site_settings.sql 을 Supabase 에서 아직 실행하지 않았다면 먼저 실행해 주세요.) ' + error.message; return; }
       const row = data || window.SITE_DEFAULTS || {};
       Object.keys(SITE_IDS).forEach(k => { $(SITE_IDS[k]).value = row[k] == null ? '' : row[k]; });
+      if (!['new', 'old', 'both'].includes($('sTarget').value)) $('sTarget').value = 'new';
+      siteHasTarget = !!(data && 'inquiry_target' in data);
+      if (data && !siteHasTarget) $('siteErr').textContent = '※ "접수 받을 곳"을 쓰려면 db/site_settings_2_접수받을곳.sql 을 Supabase(홈페이지용 프로젝트)에서 먼저 실행해 주세요. 실행 전에는 이 선택만 저장되지 않습니다.';
     }
     $('siteReset').addEventListener('click', loadSite);
     $('siteForm').addEventListener('submit', async e => {
@@ -562,6 +581,7 @@
       v.sms = v.sms.replace(/\D/g, '');
       if (!/^[0-9]{9,11}$/.test(v.sms)) return err('문자 받을 번호는 숫자 9~11자리로 입력해 주세요. (예: 01012345678)');
       if (v.kakao_url && !/^https?:\/\//i.test(v.kakao_url)) return err('카카오톡 채널 주소는 http:// 또는 https:// 로 시작해야 합니다.');
+      if (!siteHasTarget) delete v.inquiry_target;   // SQL 을 아직 안 돌렸으면 이 선택은 빼고 저장
       $('siteSave').disabled = true;
       const { data, error } = await sb.from('site_settings').upsert({ id: 1, ...v, updated_at: new Date().toISOString() }).select().maybeSingle();
       $('siteSave').disabled = false;

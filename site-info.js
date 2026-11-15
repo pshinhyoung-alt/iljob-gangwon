@@ -10,7 +10,8 @@
     brand: '일잡코리아', branch: '강원본부', ceo: '박신형',
     phone: '033-731-5282', sms: '01084943848',
     address: '강원특별자치도 원주시 무실로 58',
-    biz_no: '', job_no: '', kakao_url: '', hours: ''
+    biz_no: '', job_no: '', kakao_url: '', hours: '',
+    inquiry_target: 'new'          // 접수 받을 곳: new=인력배치 접수함, old=옛 관리자 페이지, both=둘 다
   };
   var KEYS = Object.keys(DEFAULTS);
   var CACHE = 'iljob_site_v1';
@@ -25,6 +26,7 @@
       o[k] = v === null ? DEFAULTS[k] : (v === '' && !OPTIONAL[k] ? DEFAULTS[k] : v);
     });
     o.sms = o.sms.replace(/\D/g, '') || DEFAULTS.sms;
+    if (o.inquiry_target !== 'old' && o.inquiry_target !== 'both') o.inquiry_target = 'new';
     return o;
   }
 
@@ -100,7 +102,7 @@
     if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY || !window.fetch) return;
     var ctl = window.AbortController ? new AbortController() : null;
     var timer = ctl ? setTimeout(function () { ctl.abort(); }, 8000) : null;
-    fetch(cfg.SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/site_settings?id=eq.1&select=' + KEYS.join(','), {
+    fetch(cfg.SUPABASE_URL.replace(/\/$/, '') + '/rest/v1/site_settings?id=eq.1&select=*', {
       headers: { apikey: cfg.SUPABASE_ANON_KEY, Authorization: 'Bearer ' + cfg.SUPABASE_ANON_KEY },
       signal: ctl ? ctl.signal : undefined
     }).then(function (r) { return r.ok ? r.json() : null; }).then(function (rows) {

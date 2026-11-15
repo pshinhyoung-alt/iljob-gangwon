@@ -1553,14 +1553,20 @@
       return data;   // { ok, receipt_no, merged }
     }
 
+    // 접수를 받을 곳은 관리자 페이지 [🏢 홈페이지 정보] 의 "접수 받을 곳"에서 고름
+    //   new = 인력배치 프로그램 접수함(기본) / old = 옛 관리자 페이지 / both = 둘 다(복사)
+    // config.js 에 INQUIRY_URL 이 따로 없으면 접수 연결이 하나뿐이라 선택과 상관없이 그곳으로 감
     async function sendRecord(type, channel, rec) {
       const body = JSON.stringify({ p: Object.assign({}, rec, { type, channel }) });
-      const data = await postInquiry(INQ_URL, INQ_KEY, body);   // 손님에게 보이는 결과는 이쪽(인력배치 프로그램 접수함)
-      // 옛 관리자 페이지(admin.html)에도 같은 접수를 복사해 둠. config.js 의 INQUIRY_COPY_TO_OLD 로 켜고 끔.
-      // 복사가 실패해도 손님 화면·접수에는 영향 없음 (재전송도 하지 않음)
-      if (DB.INQUIRY_COPY_TO_OLD && INQ_URL !== DB.SUPABASE_URL) {
-        postInquiry(DB.SUPABASE_URL, DB.SUPABASE_ANON_KEY, body).catch(() => {});
-      }
+      const target = SITE_NOW().inquiry_target || 'new';
+      const hasTwo = INQ_URL !== DB.SUPABASE_URL;
+      const toOld = hasTwo && target === 'old';
+      // 손님 화면에 보이는 접수 결과는 주된 곳(old 선택 시 옛 쪽, 그 외 인력배치 쪽)의 것
+      const data = toOld
+        ? await postInquiry(DB.SUPABASE_URL, DB.SUPABASE_ANON_KEY, body)
+        : await postInquiry(INQ_URL, INQ_KEY, body);
+      // '둘 다'이면 옛 관리자 페이지에도 복사. 복사가 실패해도 손님 접수에는 영향 없음 (재전송 안 함)
+      if (hasTwo && target === 'both') postInquiry(DB.SUPABASE_URL, DB.SUPABASE_ANON_KEY, body).catch(() => {});
       return data;   // { ok, receipt_no, merged }
     }
 
