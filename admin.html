@@ -437,6 +437,7 @@
           </div>
           <label for="sCeo">대표자</label><input class="field-in" id="sCeo" maxlength="30" required>
           <label for="sAddr">주소</label><input class="field-in" id="sAddr" maxlength="120" required>
+          <label for="sArea">서비스 지역 <small>(홈페이지 "오시는 길"의 서비스 지역과 소개 문구에 표시)</small></label><input class="field-in" id="sArea" maxlength="60" required>
           <div class="two">
             <div><label for="sPhone">대표 전화 <small>(손님이 전화하는 번호)</small></label><input class="field-in" id="sPhone" inputmode="tel" maxlength="20" required placeholder="033-000-0000"></div>
             <div><label for="sSms">문자 받을 번호 <small>(휴대폰 · 숫자만)</small></label><input class="field-in" id="sSms" inputmode="numeric" maxlength="13" required placeholder="01000000000"></div>
@@ -590,8 +591,10 @@
     let all = [], filtered = [], current = null, mode = 'view', typeF = '', quickF = '', lastUnread = -1, pollTimer = null;
 
     // ---------------- 홈페이지 정보 (상호·전화·주소·대표 등) ----------------
-    const SITE_IDS = { brand: 'sBrand', branch: 'sBranch', ceo: 'sCeo', address: 'sAddr', phone: 'sPhone', sms: 'sSms', hours: 'sHours', biz_no: 'sBiz', job_no: 'sJob', kakao_url: 'sKakao', inquiry_target: 'sTarget' };
-    let siteHasTarget = false;   // 설정 표에 "접수 받을 곳" 칸이 이미 있는지
+    const SITE_IDS = { brand: 'sBrand', branch: 'sBranch', ceo: 'sCeo', address: 'sAddr', phone: 'sPhone', sms: 'sSms', hours: 'sHours', biz_no: 'sBiz', job_no: 'sJob', kakao_url: 'sKakao', inquiry_target: 'sTarget', service_area: 'sArea' };
+    // 나중에 추가된 칸: 설정 표에 아직 없으면(SQL 미실행) 저장할 때 빼고, 있는 칸만 저장
+    const SITE_NEW_COLS = { inquiry_target: 'site_settings_2_접수받을곳.sql', service_area: 'site_settings_3_서비스지역.sql' };
+    let siteCols = new Set();
     async function loadSite() {
       $('siteErr').textContent = '';
       const { data, error } = await sb.from('site_settings').select('*').eq('id', 1).maybeSingle();
@@ -599,8 +602,12 @@
       const row = data || window.SITE_DEFAULTS || {};
       Object.keys(SITE_IDS).forEach(k => { $(SITE_IDS[k]).value = row[k] == null ? '' : row[k]; });
       if (!['new', 'old', 'both'].includes($('sTarget').value)) $('sTarget').value = 'new';
-      siteHasTarget = !!(data && 'inquiry_target' in data);
-      if (data && !siteHasTarget) $('siteErr').textContent = '※ "접수 받을 곳"을 쓰려면 db/site_settings_2_접수받을곳.sql 을 Supabase(홈페이지용 프로젝트)에서 먼저 실행해 주세요. 실행 전에는 이 선택만 저장되지 않습니다.';
+      siteCols = new Set(data ? Object.keys(data) : []);
+      if (data) {
+        if (!$('sArea').value) $('sArea').value = (window.SITE_DEFAULTS || {}).service_area || '';
+        const missing = Object.keys(SITE_NEW_COLS).filter(c => !siteCols.has(c));
+        if (missing.length) $('siteErr').textContent = '※ 일부 칸은 db/ 폴더의 ' + [...new Set(missing.map(c => SITE_NEW_COLS[c]))].join(', ') + ' 를 Supabase(홈페이지용 프로젝트)에서 먼저 실행해야 저장됩니다. 실행 전에는 그 칸만 저장되지 않습니다.';
+      }
     }
     $('siteReset').addEventListener('click', loadSite);
     $('siteForm').addEventListener('submit', async e => {
@@ -616,7 +623,8 @@
       v.sms = v.sms.replace(/\D/g, '');
       if (!/^[0-9]{9,11}$/.test(v.sms)) return err('문자 받을 번호는 숫자 9~11자리로 입력해 주세요. (예: 01012345678)');
       if (v.kakao_url && !/^https?:\/\//i.test(v.kakao_url)) return err('카카오톡 채널 주소는 http:// 또는 https:// 로 시작해야 합니다.');
-      if (!siteHasTarget) delete v.inquiry_target;   // SQL 을 아직 안 돌렸으면 이 선택은 빼고 저장
+      if (!v.service_area) return err('서비스 지역을 입력해 주세요.');
+      Object.keys(SITE_NEW_COLS).forEach(c => { if (!siteCols.has(c)) delete v[c]; });   // SQL 을 아직 안 돌린 칸은 빼고 저장
       $('siteSave').disabled = true;
       const { data, error } = await sb.from('site_settings').upsert({ id: 1, ...v, updated_at: new Date().toISOString() }).select().maybeSingle();
       $('siteSave').disabled = false;

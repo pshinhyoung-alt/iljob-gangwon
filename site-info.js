@@ -11,6 +11,7 @@
     phone: '033-731-5282', sms: '01084943848',
     address: '강원특별자치도 원주시 무실로 58',
     biz_no: '', job_no: '', kakao_url: '', hours: '',
+    service_area: '원주 및 강원 전 지역',   // 서비스 지역 ("오시는 길"·소개 문구)
     inquiry_target: 'new'          // 접수 받을 곳: new=인력배치 접수함, old=옛 관리자 페이지, both=둘 다
   };
   var KEYS = Object.keys(DEFAULTS);
@@ -50,7 +51,8 @@
       [a.address, b.address],
       [encodeURIComponent(a.address), encodeURIComponent(b.address)],
       [shortAddr(a.address), shortAddr(b.address)],
-      [a.ceo, b.ceo]
+      [a.ceo, b.ceo],
+      [a.service_area, b.service_area]
     ];
     var map = {};
     list.forEach(function (p) { if (p[0] && p[0] !== p[1] && p[0].length >= 2 && !(p[0] in map)) map[p[0]] = p[1]; });
