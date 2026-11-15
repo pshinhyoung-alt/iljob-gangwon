@@ -15,6 +15,8 @@
     inquiry_target: 'new'          // 접수 받을 곳: new=인력배치 접수함, old=옛 관리자 페이지, both=둘 다
   };
   var KEYS = Object.keys(DEFAULTS);
+  // <script src="site-info.js" data-scope=".brand"> 처럼 쓰면 그 부분의 글자만 바꿈 (관리자 페이지: 손님 접수 내용은 건드리지 않도록)
+  var SCOPE = document.currentScript && document.currentScript.getAttribute('data-scope');
   var CACHE = 'iljob_site_v1';
   var ATTRS = ['href', 'src', 'title', 'alt', 'aria-label', 'content'];
 
@@ -65,25 +67,30 @@
     var pairs = buildPairs(prev, cur);
     if (pairs) {
       var rep = function (s) { return s.replace(pairs.re, function (m) { return pairs.map[m]; }); };
-      if (document.title) document.title = rep(document.title);
-      var w = document.createTreeWalker(document.body || document.documentElement, NodeFilter.SHOW_TEXT, {
-        acceptNode: function (n) {
-          var p = n.parentNode && n.parentNode.nodeName;
-          return /^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT)$/.test(p) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+      var roots = SCOPE ? Array.prototype.slice.call(document.querySelectorAll(SCOPE)) : [document.documentElement];
+      if (!SCOPE && document.title) document.title = rep(document.title);
+      roots.forEach(function (root) {
+        var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+          acceptNode: function (n) {
+            var p = n.parentNode && n.parentNode.nodeName;
+            return /^(SCRIPT|STYLE|TEXTAREA|NOSCRIPT|TITLE)$/.test(p) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT;
+          }
+        });
+        var node, nodes = [];
+        while ((node = w.nextNode())) nodes.push(node);
+        nodes.forEach(function (t) { var v = rep(t.nodeValue); if (v !== t.nodeValue) t.nodeValue = v; });
+        var els = Array.prototype.slice.call(root.querySelectorAll('[href],[src],[title],[alt],[aria-label],meta[content]'));
+        els.push(root);
+        els.forEach(function (el) {
+          ATTRS.forEach(function (a) {
+            var v = el.getAttribute && el.getAttribute(a);
+            if (v) { var nv = rep(v); if (nv !== v) el.setAttribute(a, nv); }
+          });
+        });
+        if (prev.brand !== cur.brand) {
+          root.querySelectorAll('.logo-mark, .brand .mk').forEach(function (m) { m.textContent = cur.brand.charAt(0); });
         }
       });
-      var node, nodes = [];
-      while ((node = w.nextNode())) nodes.push(node);
-      nodes.forEach(function (t) { var v = rep(t.nodeValue); if (v !== t.nodeValue) t.nodeValue = v; });
-      document.querySelectorAll('[href],[src],[title],[alt],[aria-label],meta[content]').forEach(function (el) {
-        ATTRS.forEach(function (a) {
-          var v = el.getAttribute(a);
-          if (v) { var nv = rep(v); if (nv !== v) el.setAttribute(a, nv); }
-        });
-      });
-      if (prev.brand !== cur.brand) {
-        document.querySelectorAll('.logo-mark, .brand .mk').forEach(function (m) { m.textContent = cur.brand.charAt(0); });
-      }
     }
     // 운영 시간 (있을 때만 보임)
     var hr = document.getElementById('hoursRow'), hv = document.getElementById('hoursVal');

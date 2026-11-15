@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
   <script src="config.js"></script>
-  <script src="site-info.js"></script>
+  <script src="site-info.js" data-scope=".brand"></script>
   <script src="media-tools.js" defer></script>
   <script src="admin-gallery.js" defer></script>
   <style>
@@ -707,7 +707,8 @@
       const unread = all.filter(r => !r.is_read).length;
       if (silent && lastUnread >= 0 && unread > lastUnread) toast('새 접수 ' + (unread - lastUnread) + '건이 들어왔습니다');
       lastUnread = unread;
-      document.title = (unread ? '(' + unread + ') ' : '') + '접수 관리 | 일잡코리아 강원본부';
+      const s = window.SITE || {};
+      document.title = (unread ? '(' + unread + ') ' : '') + '접수 관리 | ' + ((s.brand || '일잡코리아') + ' ' + (s.branch == null ? '강원본부' : s.branch)).trim();
       stats(); render();
     }
 
