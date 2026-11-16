@@ -1622,8 +1622,10 @@
     //   new = 인력배치 프로그램 접수함(기본) / old = 옛 관리자 페이지 / both = 둘 다(복사)
     // config.js 에 INQUIRY_URL 이 따로 없으면 접수 연결이 하나뿐이라 선택과 상관없이 그곳으로 감
     async function sendRecord(type, channel, rec) {
-      const body = JSON.stringify({ p: Object.assign({}, rec, { type, channel }) });
-      const target = SITE_NOW().inquiry_target || 'new';
+      // 지점 홈페이지(?b=코드)에서 보낸 접수는 그 지점 접수함으로만 보냄 (옛 관리자 페이지로는 복사하지 않음)
+      const branch = window.SITE_BRANCH || '';
+      const body = JSON.stringify({ p: Object.assign({}, rec, { type, channel }, branch ? { branch_code: branch } : {}) });
+      const target = branch ? 'new' : (SITE_NOW().inquiry_target || 'new');
       const hasTwo = INQ_URL !== DB.SUPABASE_URL;
       const toOld = hasTwo && target === 'old';
       // 손님 화면에 보이는 접수 결과는 주된 곳(old 선택 시 옛 쪽, 그 외 인력배치 쪽)의 것
