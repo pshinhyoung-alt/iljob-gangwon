@@ -24,6 +24,15 @@
 
   var OPTIONAL = { branch: 1, biz_no: 1, job_no: 1, kakao_url: 1, hours: 1 };   // 비워 둘 수 있는 항목
 
+  // 하이픈 없이 저장된 번호(0327111234)를 보기 좋게 (032-711-1234)
+  function fmtPhone(p) {
+    var s = String(p || ''), d = s.replace(/\D/g, '');
+    if (s.indexOf('-') >= 0) return s;
+    if (d.length === 11) return d.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
+    if (d.length === 10) return d.indexOf('02') === 0 ? d.replace(/(\d{2})(\d{4})(\d{4})/, '$1-$2-$3') : d.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+    if (d.length === 9 && d.indexOf('02') === 0) return d.replace(/(\d{2})(\d{3})(\d{4})/, '$1-$2-$3');
+    return s;
+  }
   function deriveArea(s) { return String(s || '').trim().split(/\s*(?:및|,|·|\/)\s*|\s+/)[0] || ''; }
 
   function clean(src) {
@@ -32,6 +41,7 @@
       var v = src && typeof src[k] === 'string' ? src[k].trim() : null;
       o[k] = v === null ? DEFAULTS[k] : (v === '' && !OPTIONAL[k] ? DEFAULTS[k] : v);
     });
+    o.phone = fmtPhone(o.phone);
     o.sms = o.sms.replace(/\D/g, '') || DEFAULTS.sms;
     // 대표 지역명: 제목 등의 "○○ 전문 인력사무소" 에 쓰임. 따로 입력한 값(지점)이 없으면 서비스 지역의 첫 지역 (원주 및 강원 전 지역 → 원주)
     o.area = (src && typeof src.area === 'string' && src.area.trim()) || deriveArea(o.service_area);
@@ -110,8 +120,52 @@
     // 운영 시간 (있을 때만 보임)
     var hr = document.getElementById('hoursRow'), hv = document.getElementById('hoursVal');
     if (hr && hv) { hv.textContent = cur.hours; hr.style.display = cur.hours ? '' : 'none'; }
+    if (!SCOPE) { setLogos(); fitHeader(); }
     prev = JSON.parse(JSON.stringify(cur));
   }
+
+  // 머리글·바닥글 로고 글자: 상호 + (작게) 지점명. 글자 치환에 맡기지 않고 직접 맞춰서 항상 같은 모양이 되게 함
+  function setLogos() {
+    Array.prototype.forEach.call(document.querySelectorAll('.logo'), function (lg) {
+      var small = lg.querySelector('small');
+      var txt = null;
+      for (var i = 0; i < lg.childNodes.length; i++) if (lg.childNodes[i].nodeType === 3 && lg.childNodes[i].nodeValue.trim()) { txt = lg.childNodes[i]; break; }
+      if (txt && txt.nodeValue !== cur.brand) txt.nodeValue = cur.brand;
+      if (small) { if (small.textContent !== cur.branch) small.textContent = cur.branch; small.hidden = !cur.branch; }
+    });
+  }
+
+  // 머리글 자동 맞춤: 상호·지점명이 길어서 메뉴와 겹치면 로고 글자부터 차례로 줄이고, 그래도 안 맞으면 지점명을 숨김
+  function fitHeader() {
+    var header = document.getElementById('header');
+    var nav = header && header.querySelector('.nav');
+    var logo = header && header.querySelector('.logo');
+    var links = header && header.querySelector('.nav-links');
+    var call = header && header.querySelector('.nav-call');
+    if (!nav || !logo || !call) return;
+    var small = logo.querySelector('small');
+    logo.style.fontSize = ''; logo.style.whiteSpace = 'nowrap'; logo.style.flexShrink = '0';
+    if (links) { links.style.fontSize = ''; links.style.gap = ''; }
+    if (small) small.style.display = '';
+    function bad() {
+      if (nav.scrollWidth > nav.clientWidth + 1) return true;
+      var next = links && links.offsetParent !== null ? links : call;
+      return logo.getBoundingClientRect().right > next.getBoundingClientRect().left - 12;
+    }
+    if (!bad()) return;
+    var base = parseFloat(getComputedStyle(logo).fontSize) || 20, fs = base, n = 0;
+    while (bad() && fs > base * 0.72 && n++ < 12) { fs -= base * 0.03; logo.style.fontSize = fs + 'px'; }
+    if (bad() && links && links.offsetParent !== null) {
+      var lf = parseFloat(getComputedStyle(links).fontSize) || 18, k = 0;
+      links.style.gap = '14px';
+      while (bad() && lf > 13 && k++ < 8) { lf -= 1; links.style.fontSize = lf + 'px'; }
+    }
+    if (bad() && small) small.style.display = 'none';
+  }
+  var fitTimer = null;
+  window.addEventListener('resize', function () { clearTimeout(fitTimer); fitTimer = setTimeout(function () { if (!SCOPE) fitHeader(); }, 120); });
+  window.addEventListener('load', function () { if (!SCOPE) { setLogos(); fitHeader(); } });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (!SCOPE) fitHeader(); });
 
   var ready = function () { apply(); };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ready); else ready();
