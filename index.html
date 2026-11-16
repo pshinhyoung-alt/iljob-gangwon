@@ -1217,6 +1217,15 @@
               <select id="e_period" name="period">
                 <option>당일(1일)</option><option>2~3일</option><option>1주일</option><option>1개월</option><option>장기(1개월 이상)</option><option>협의</option>
               </select></div>
+            <div class="field"><label for="e_cert">자격증 조건 <span style="font-weight:500;color:var(--sub);font-size:.82rem">(요양보호사 등)</span></label>
+              <select id="e_cert" name="certPref">
+                <option value="">상관없음</option><option value="우선">자격증 있는 분 우선</option><option value="필수">자격증 필수</option>
+              </select></div>
+            <div class="field"><label for="e_topik">외국인 근로자 한국어 조건</label>
+              <select id="e_topik" name="minTopik">
+                <option value="">상관없음</option><option value="2">기본 대화 가능 (TOPIK 2급 이상)</option>
+                <option value="3">일상 대화 원활 (TOPIK 3급 이상)</option><option value="4">업무 소통 원활 (TOPIK 4급 이상)</option>
+              </select></div>
             <div class="field full"><label for="e_loc">작업 장소<em>*</em></label><input type="text" id="e_loc" name="location" maxlength="100" placeholder="예: 원주시 단구동 OO아파트 / 횡성군 OO리 농가" required /></div>
             <div class="field full"><label for="e_detail">작업 내용·요청 사항</label><textarea id="e_detail" name="details" maxlength="1000" placeholder="예: 아파트 내부 철거 보조, 오전 8시 시작, 점심 제공"></textarea></div>
           </div>
@@ -1245,6 +1254,8 @@
             <div class="field"><label for="s_phone">연락처<em>*</em></label><input type="tel" id="s_phone" name="phone" maxlength="20" placeholder="010-0000-0000" required autocomplete="tel" /></div>
             <div class="field"><span class="lb">구분</span>
               <div class="chips"><label><input type="radio" name="nationality" value="내국인" checked />내국인</label><label><input type="radio" name="nationality" value="외국인" />외국인</label></div></div>
+            <div class="field" id="s_topik_box" style="display:none"><label for="s_topik">한국어 능력 (TOPIK)</label>
+              <select id="s_topik" name="topik"><option value="">없음 / 모름</option><option value="1">1급</option><option value="2">2급</option><option value="3">3급</option><option value="4">4급</option><option value="5">5급</option><option value="6">6급</option></select></div>
             <div class="field"><label for="s_age">연령대</label>
               <select id="s_age" name="ageGroup"><option value="">선택 안 함</option><option>20대</option><option>30대</option><option>40대</option><option>50대</option><option>60대 이상</option></select></div>
             <div class="field full"><span class="lb">희망 분야<em>*</em> <span style="font-weight:500;color:var(--sub);font-size:.82rem">(여러 개 선택 가능)</span></span>
@@ -1257,6 +1268,8 @@
                 <label><input type="checkbox" name="fields" value="농업" />농업</label>
                 <label><input type="checkbox" name="fields" value="분야 무관" />분야 무관</label>
               </div></div>
+            <div class="field full"><span class="lb">자격증</span>
+              <div class="chips"><label><input type="checkbox" name="careCert" value="1" />요양보호사 자격증 있음</label></div></div>
             <div class="field"><label for="s_area">희망 근무 지역</label><input type="text" id="s_area" name="area" maxlength="50" value="원주" /></div>
             <div class="field"><label for="s_type">희망 근무 형태</label>
               <select id="s_type" name="workType"><option>일용직(하루 단위)</option><option>단기(1주~1개월)</option><option>장기·상용</option><option>상관없음</option></select></div>
@@ -1541,6 +1554,58 @@
     // 모든 접수(양식·문자·카톡)를 같은 항목 이름으로 통일
     const FIELD_MAP = { company: 'name', startDate: 'schedule', fields: 'field', area: 'location', experience: 'details' };
 
+    // 구직 양식: '외국인'을 고르면 한국어 능력 칸을 보여 줌
+    (function () {
+      const box = document.getElementById('s_topik_box');
+      if (!box) return;
+      const sync = () => {
+        const f = document.querySelector('[name=nationality]:checked');
+        const on = !!f && f.value === '외국인';
+        box.style.display = on ? '' : 'none';
+        if (!on) document.getElementById('s_topik').value = '';
+      };
+      document.querySelectorAll('[name=nationality]').forEach(r => r.addEventListener('change', sync));
+      sync();
+    })();
+
+    // 인력배치 프로그램의 직종 중 홈페이지 분야 목록에 없는 것을 자동으로 추가 (예: 조경, 요양보호사)
+    // 기존 분야 이름이 어떤 직종으로 연결되는지는 인력배치 프로그램(common.js 의 jobIdsFromText)과 같은 규칙
+    (function () {
+      const empSel = document.getElementById('e_field');
+      const seekBox = document.querySelector('[data-group=fields]');
+      if (!INQ_URL || !INQ_KEY || !empSel || !seekBox) return;
+      const RULES = [[/집수리/, '집수리'], [/건설/, '건설'], [/청소/, '청소'], [/폐기물/, '폐기물'], [/농업/, '농업'],
+                     [/간병|돌봄|요양/, '간병·돌봄'], [/요양보호사/, '요양보호사']];
+      const covers = (text) => {
+        const t = String(text).replace(/생활\s*돌봄\s*\(?\s*집수리\s*\)?/g, '집수리');
+        return RULES.filter(([re]) => re.test(t)).map(([, n]) => n).concat(t);
+      };
+      fetch(INQ_URL.replace(/\/$/, '') + '/rest/v1/rpc/public_job_types', {
+        method: 'POST', body: '{}',
+        headers: { apikey: INQ_KEY, Authorization: 'Bearer ' + INQ_KEY, 'Content-Type': 'application/json' }
+      }).then(r => (r.ok ? r.json() : [])).then(rows => {
+        if (!Array.isArray(rows)) return;
+        const have = new Set();
+        [...empSel.options].forEach(o => covers(o.textContent).forEach(n => have.add(n)));
+        seekBox.querySelectorAll('input').forEach(i => covers(i.value).forEach(n => have.add(n)));
+        const empLast = [...empSel.options].find(o => o.textContent === '기타') || null;
+        const seekLast = seekBox.querySelector('input[value="분야 무관"]');
+        rows.forEach(row => {
+          const name = String(row.name || '').trim();
+          if (!name || have.has(name)) return;
+          have.add(name);
+          const opt = document.createElement('option');
+          opt.textContent = name;
+          empSel.insertBefore(opt, empLast);
+          const lab = document.createElement('label');
+          const cb = document.createElement('input');
+          cb.type = 'checkbox'; cb.name = 'fields'; cb.value = name;
+          lab.append(cb, name);
+          seekBox.insertBefore(lab, seekLast ? seekLast.closest('label') : null);
+        });
+      }).catch(() => {});
+    })();
+
     // 접수 한 건을 한 곳(url)에 저장. 실패하면 오류를 던짐
     async function postInquiry(url, key, body) {
       const res = await fetch(url.replace(/\/$/, '') + '/rest/v1/rpc/submit_inquiry', {
@@ -1668,6 +1733,15 @@
           }
           const checked = [...form.querySelectorAll('[name=fields]:checked')].map(c => c.value);
           if (checked.length) rec.field = checked.join(', ');
+          // 자격증·한국어 조건은 접수 내용 앞에 [ ] 표시로 붙여 보냄
+          // (인력배치 프로그램의 [인력의뢰 만들기]·[구직자로 등록]이 이 표시를 읽어 해당 칸을 자동으로 채움)
+          const tags = [];
+          if (rec.certPref) tags.push('[자격증 ' + rec.certPref + ']');
+          if (rec.minTopik) tags.push('[한국어 TOPIK ' + rec.minTopik + '급 이상]');
+          if (rec.careCert) tags.push('[요양보호사 자격증 있음]');
+          if (rec.topik && rec.nationality === '외국인') tags.push('[TOPIK ' + rec.topik + '급]');
+          ['certPref', 'minTopik', 'careCert', 'topik'].forEach(k => delete rec[k]);
+          if (tags.length) rec.details = (tags.join(' ') + (rec.details ? '\n' + rec.details : '')).slice(0, 1000);
           const btn = form.querySelector('.fsubmit'); const label = btn.textContent;
           btn.disabled = true; btn.textContent = '접수 중입니다…'; msgEl.textContent = '';
           try {
