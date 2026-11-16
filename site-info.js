@@ -24,6 +24,8 @@
 
   var OPTIONAL = { branch: 1, biz_no: 1, job_no: 1, kakao_url: 1, hours: 1 };   // 비워 둘 수 있는 항목
 
+  function deriveArea(s) { return String(s || '').trim().split(/\s*(?:및|,|·|\/)\s*|\s+/)[0] || ''; }
+
   function clean(src) {
     var o = {};
     KEYS.forEach(function (k) {
@@ -31,6 +33,8 @@
       o[k] = v === null ? DEFAULTS[k] : (v === '' && !OPTIONAL[k] ? DEFAULTS[k] : v);
     });
     o.sms = o.sms.replace(/\D/g, '') || DEFAULTS.sms;
+    // 대표 지역명: 제목 등의 "○○ 전문 인력사무소" 에 쓰임. 따로 입력한 값(지점)이 없으면 서비스 지역의 첫 지역 (원주 및 강원 전 지역 → 원주)
+    o.area = (src && typeof src.area === 'string' && src.area.trim()) || deriveArea(o.service_area);
     if (o.inquiry_target !== 'old' && o.inquiry_target !== 'both') o.inquiry_target = 'new';
     if (CODE) o.inquiry_target = 'new';   // 지점 홈페이지의 접수는 항상 인력배치 프로그램의 그 지점 접수함으로
     return o;
@@ -62,12 +66,15 @@
       [encodeURIComponent(a.address), encodeURIComponent(b.address)],
       [shortAddr(a.address), shortAddr(b.address)],
       [a.ceo, b.ceo],
-      [a.service_area, b.service_area]
+      [a.service_area, b.service_area],
+      [a.area, b.area]            // 짧은 지역명 (원주 → 안산). 위의 주소·서비스 지역보다 짧아서 그것들이 먼저 바뀐 뒤 남는 글자만 바뀜
     ];
     var map = {};
     list.forEach(function (p) { if (p[0] && p[0] !== p[1] && p[0].length >= 2 && !(p[0] in map)) map[p[0]] = p[1]; });
+    if (!Object.keys(map).length) return null;
+    // 주소는 바뀌지 않더라도 그 안의 지역명(원주시)이 따로 바뀌지 않게 통째로 보호
+    [a.address, shortAddr(a.address), encodeURIComponent(a.address)].forEach(function (g) { if (g && g.length >= 2 && !(g in map)) map[g] = g; });
     var froms = Object.keys(map).sort(function (x, y) { return y.length - x.length; });
-    if (!froms.length) return null;
     return { re: new RegExp(froms.map(reEsc).join('|'), 'g'), map: map };
   }
 

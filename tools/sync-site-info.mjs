@@ -36,6 +36,8 @@ const digits = (s) => String(s).replace(/\D/g, "");
 const shortAddr = (a) => a.replace(/^강원(특별자치)?도\s*/, "");
 const full = (o) => (o.brand + " " + o.branch).trim();
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// 대표 지역명 (제목의 "○○ 전문 인력사무소"): 서비스 지역의 첫 지역. site-info.js 의 deriveArea 와 같은 규칙
+const deriveArea = (s) => String(s || "").trim().split(/\s*(?:및|,|·|\/)\s*|\s+/)[0] || "";
 
 // site-info.js 의 buildPairs 와 같은 규칙 (긴 것부터, 한 번에 바꿔서 새 글자가 다시 바뀌지 않게)
 const list = [
@@ -44,11 +46,14 @@ const list = [
   [old.address, cur.address], [encodeURIComponent(old.address), encodeURIComponent(cur.address)],
   [shortAddr(old.address), shortAddr(cur.address)],
   [old.ceo, cur.ceo], [old.service_area, cur.service_area],
+  [deriveArea(old.service_area), deriveArea(cur.service_area)],   // 짧은 지역명 (원주 → 새 지역명)
 ];
 const map = {};
 for (const [a, b] of list) if (a && a !== b && a.length >= 2 && !(a in map)) map[a] = b;
+if (!Object.keys(map).length) { console.log("원본과 같습니다. 바꿀 것 없음."); process.exit(0); }
+// 주소는 바뀌지 않더라도 그 안의 지역명(원주시)이 따로 바뀌지 않게 통째로 보호
+for (const g of [old.address, shortAddr(old.address), encodeURIComponent(old.address)]) if (g && g.length >= 2 && !(g in map)) map[g] = g;
 const froms = Object.keys(map).sort((x, y) => y.length - x.length);
-if (!froms.length) { console.log("원본과 같습니다. 바꿀 것 없음."); process.exit(0); }
 const re = new RegExp(froms.map(esc).join("|"), "g");
 
 for (const f of FILES) {
