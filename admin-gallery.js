@@ -464,7 +464,9 @@ ${musicPicker('S')}
       }
       btns.push(shown ? `<button type="button" class="btn btn-light" data-g="allOff">현장 전체 숨기기</button>` : `<button type="button" class="btn btn-light" data-g="allOn">현장 전체 공개</button>`);
       if (g.L.length > 1) btns.push(`<button type="button" class="btn btn-light" data-g="toggle">${openGroups.has(g.key) ? '접기 ▴' : '하나씩 보기 ▾'}</button>`);
-      const tiles = (g.L.length === 1 || openGroups.has(g.key)) ? `<div class="g-tiles">${g.L.map(it => `
+      // 사진·영상이 하나뿐인 현장은 위 대표 사진이 곧 그 항목이므로 아래 칸을 따로 그리지 않고 삭제 버튼만 둠 (같은 그림이 두 번 보이지 않게)
+      else btns.push(`<button type="button" class="btn btn-danger" data-g="delOne">삭제</button>`);
+      const tiles = (g.L.length > 1 && openGroups.has(g.key)) ? `<div class="g-tiles">${g.L.map(it => `
           <div class="g-item${it.published ? '' : ' off'}" data-id="${it.id}">
             <div class="g-ph"><img src="${esc(thumbOf(it))}" alt="" loading="lazy" /><span class="g-kind">${KIND_TXT[it.kind]}${it.published ? '' : ' · 숨김'}</span></div>
             <div class="g-act">
@@ -505,6 +507,7 @@ ${musicPicker('S')}
       if (a === 'videosOn') return setPublished(g.videos, true, '영상을 다시 공개했습니다');
       if (a === 'allOff') return setPublished(g.L, false, '이 현장을 갤러리에서 숨겼습니다');
       if (a === 'allOn') return setPublished(g.L, true, '이 현장을 갤러리에 공개했습니다');
+      if (a === 'delOne') return deleteItem(g.L[0]);
       return;
     }
     const b = e.target.closest('[data-a]'); if (!b) return;
@@ -514,13 +517,16 @@ ${musicPicker('S')}
       if (error) return toast('변경 실패: ' + error.message);
       toast(it.published ? '갤러리에서 숨겼습니다' : '갤러리에 공개했습니다'); loadList();
     } else if (b.dataset.a === 'del') {
-      if (!confirm('이 사진·영상을 삭제할까요? 되돌릴 수 없습니다.\n(삭제 대신 [숨기기]를 쓰면 나중에 다시 공개할 수 있어요)')) return;
-      const paths = [it.media_path, it.after_path, it.thumb_path].filter(Boolean);
-      if (paths.length) await sb.storage.from('gallery').remove(paths);
-      const { error } = await sb.from('gallery_items').delete().eq('id', it.id);
-      if (error) return toast('삭제 실패: ' + error.message);
-      toast('삭제했습니다'); loadList();
+      deleteItem(it);
     }
+  }
+  async function deleteItem(it) {
+    if (!confirm('이 사진·영상을 삭제할까요? 되돌릴 수 없습니다.\n(삭제 대신 [숨기기]를 쓰면 나중에 다시 공개할 수 있어요)')) return;
+    const paths = [it.media_path, it.after_path, it.thumb_path].filter(Boolean);
+    if (paths.length) await sb.storage.from('gallery').remove(paths);
+    const { error } = await sb.from('gallery_items').delete().eq('id', it.id);
+    if (error) return toast('삭제 실패: ' + error.message);
+    toast('삭제했습니다'); loadList();
   }
 
   window.AdminGallery = {
