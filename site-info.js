@@ -7,7 +7,7 @@
    ========================================================= */
 (function () {
   var DEFAULTS = {
-    brand: '일잡코리아', branch: '강원본부', ceo: '박신형',
+    brand: '일잡코리아', branch: '본부', ceo: '박신형',
     phone: '033-731-5282', sms: '01084943848',
     address: '강원특별자치도 원주시 무실로 58',
     biz_no: '', job_no: '', kakao_url: '', hours: '',

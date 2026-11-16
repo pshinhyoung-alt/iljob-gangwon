@@ -2,7 +2,7 @@
   "id": "./admin.html",
   "name": "일잡코리아 접수관리",
   "short_name": "일잡 관리",
-  "description": "일잡코리아 강원본부 접수 관리 (관리자 전용)",
+  "description": "일잡코리아 본부 접수 관리 (관리자 전용)",
   "lang": "ko",
   "start_url": "./admin.html?source=app",
   "scope": "./",

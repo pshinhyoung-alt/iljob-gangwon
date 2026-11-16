@@ -11,7 +11,7 @@
   // 영상 끝 화면·하단 띠에 들어가는 상호·전화번호 (관리자 페이지 [홈페이지 정보] 값을 따라감)
   const SITE = () => window.SITE || {};
   const BRAND = {
-    get name() { return ((SITE().brand || '일잡코리아') + ' ' + (SITE().branch === undefined ? '강원본부' : SITE().branch)).trim(); },
+    get name() { return ((SITE().brand || '일잡코리아') + ' ' + (SITE().branch === undefined ? '본부' : SITE().branch)).trim(); },
     get short() { return SITE().brand || '일잡코리아'; },
     get phone() { return SITE().phone || '033-731-5282'; },
     slogan: '필요한 일손, 당일 매칭'
