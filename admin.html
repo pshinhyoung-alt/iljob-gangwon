@@ -701,9 +701,15 @@
 
     // ---------------- 불러오기 ----------------
     async function load(silent) {
-      const { data, error } = await sb.from('inquiries').select('*').order('updated_at', { ascending: false }).limit(2000);
-      if (error) { toast('불러오기 실패: ' + error.message); return; }
-      all = data || [];
+      // Supabase 는 한 번에 1000건까지만 주므로 1000건씩 이어서 전부 불러옴
+      const list = [];
+      for (let off = 0; ; off += 1000) {
+        const { data, error } = await sb.from('inquiries').select('*').order('updated_at', { ascending: false }).order('id').range(off, off + 999);
+        if (error) { toast('불러오기 실패: ' + error.message); return; }
+        list.push(...data);
+        if (data.length < 1000) break;
+      }
+      all = list;
       const unread = all.filter(r => !r.is_read).length;
       if (silent && lastUnread >= 0 && unread > lastUnread) toast('새 접수 ' + (unread - lastUnread) + '건이 들어왔습니다');
       lastUnread = unread;
